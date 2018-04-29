@@ -1,0 +1,12 @@
+version: '3.0'
+services:
+
+  web:
+    command: python -m sanic jeopardy.app.app --host=0.0.0.0 --port=8000 --workers=1
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - .:/opt/jeopardy/src
+    ports:
+      - '8000:8000'
