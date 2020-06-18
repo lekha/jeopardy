@@ -1,4 +1,4 @@
-FROM ubuntu:xenial
+FROM ubuntu:xenial AS jeopardy_web
 
 RUN apt-get update && apt-get install -y \
     libffi-dev \
