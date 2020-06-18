@@ -9,7 +9,7 @@ services:
     volumes:
       - .:/opt/jeopardy/src
     ports:
-      - '8000:8000'
+      - "8000:8000"
 
   database:
     image: mysql:5.7
