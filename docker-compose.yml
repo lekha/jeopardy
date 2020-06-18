@@ -10,3 +10,13 @@ services:
       - .:/opt/jeopardy/src
     ports:
       - '8000:8000'
+
+  database:
+    image: mysql:5.7
+    environment:
+      MYSQL_DATABASE: "jeopardy"
+      MYSQL_USER: "web"
+      MYSQL_PASSWORD: "web_password"
+      MYSQL_ROOT_PASSWORD: "root_password"
+    ports:
+      - 3305:3306
