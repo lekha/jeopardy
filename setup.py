@@ -16,6 +16,7 @@ LONG_DESCRIPTION = DESCRIPTION
 
 SETUP_DEPS = ()
 INSTALL_DEPS = (
+    "aerich",
     "aiomysql",
     "sanic",
     "tortoise-orm",

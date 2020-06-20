@@ -1,16 +1,13 @@
 """Entry point for jeopardy web app."""
-from os import getenv
 from sanic import Sanic
 from sanic.response import text
 from tortoise.contrib.sanic import register_tortoise
 
+from jeopardy.models import TORTOISE_CONFIG
+
 
 app = Sanic("jeopardy")
-register_tortoise(
-    app,
-    db_url = getenv("DATABASE_URI"),
-    modules = {"models": ["jeopardy.models"]},
-)
+register_tortoise(app, TORTOISE_CONFIG)
 
 
 @app.route("/health-check")
