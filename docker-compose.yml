@@ -7,7 +7,7 @@ services:
       context: .
       target: jeopardy_web
     volumes:
-      - .:/opt/jeopardy/src
+      - .:/app
     ports:
       - "8000:8000"
 

@@ -1,23 +1,14 @@
-FROM ubuntu:xenial AS jeopardy_web
+FROM python:3.8-slim AS jeopardy_web
 
 RUN apt-get update && apt-get install -y \
     libffi-dev \
-    libmysqlclient-dev \
+    libmariadb-dev \
     libopenblas-dev \
-    libssl-dev \
-    mysql-client \
-    python3-dev \
-    python3-pip
-
-RUN update-alternatives --install /usr/bin/python python /usr/bin/python3.5 1
-
-# UPDATE TO LATEST PIP
-RUN pip3 install -U pip
+    libssl-dev
 
 # CREATE THE APPLICATION DIRECTORY
-RUN mkdir -p /opt/jeopardy/src
-RUN mkdir -p /opt/jeopardy/log
-WORKDIR /opt/jeopardy/src
+WORKDIR /app
+RUN mkdir /logs
 
 # INSTALL DEPENDENCIES
 ADD ./requirements.txt .
