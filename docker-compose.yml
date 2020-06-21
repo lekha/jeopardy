@@ -6,8 +6,12 @@ services:
     build:
       context: .
       target: jeopardy_web
+    depends_on:
+      - database
+    environment:
+      DATABASE_URI: "mysql://web:web_password@database:3306/jeopardy"
     volumes:
-      - .:/opt/jeopardy/src
+      - .:/app
     ports:
       - "8000:8000"
 
