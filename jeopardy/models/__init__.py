@@ -1,7 +1,6 @@
 import importlib
 import inspect
 import sys
-from os import getenv
 from pkgutil import iter_modules
 
 
@@ -19,16 +18,3 @@ def models():
 
 
 __models__ = models()
-
-
-TORTOISE_CONFIG = {
-    "connections": {
-        "default": getenv("DATABASE_URI"),
-    },
-    "apps": {
-        "models": {
-            "models": ["jeopardy.models", "aerich.models"],
-            "default_connection": "default",
-        },
-    },
-}
