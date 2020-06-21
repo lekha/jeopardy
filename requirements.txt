@@ -22,9 +22,12 @@ rfc3986==1.4.0
 sanic==20.3.0
 six==1.15.0
 sniffio==1.1.0
+sqlparse==0.3.1
+tabulate==0.8.7
 tortoise-orm==0.16.13
 typing-extensions==3.7.4.2
 ujson==3.0.0
 urllib3==1.25.9
 uvloop==0.14.0
 websockets==8.1
+yoyo-migrations==7.1.2
