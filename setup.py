@@ -17,6 +17,7 @@ LONG_DESCRIPTION = DESCRIPTION
 SETUP_DEPS = ()
 INSTALL_DEPS = (
     "aiomysql",
+    "authlib",
     "fastapi",
     "tortoise-orm",
     "uvicorn",
