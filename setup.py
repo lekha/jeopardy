@@ -19,6 +19,8 @@ INSTALL_DEPS = (
     "aiomysql",
     "authlib",
     "fastapi",
+    "httpx",
+    "itsdangerous",
     "tortoise-orm",
     "uvicorn",
     "yoyo-migrations",

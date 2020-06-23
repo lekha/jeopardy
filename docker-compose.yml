@@ -10,6 +10,9 @@ services:
       - database
     environment:
       DATABASE_URI: "mysql://web:web_password@database:3306/jeopardy"
+      GOOGLE_CLIENT_ID:
+      GOOGLE_CLIENT_SECRET:
+      SECRET_KEY:
     volumes:
       - .:/app
     ports:
