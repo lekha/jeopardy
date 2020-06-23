@@ -17,8 +17,9 @@ LONG_DESCRIPTION = DESCRIPTION
 SETUP_DEPS = ()
 INSTALL_DEPS = (
     "aiomysql",
-    "sanic",
+    "fastapi",
     "tortoise-orm",
+    "uvicorn",
     "yoyo-migrations",
 )
 EXTRAS_DEPS = {}
