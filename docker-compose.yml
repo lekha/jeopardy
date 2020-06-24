@@ -1,6 +1,6 @@
 version: "3.7"
-services:
 
+services:
   backend:
     command: uvicorn jeopardy.app:app --host=0.0.0.0 --reload
     build:
@@ -52,15 +52,33 @@ services:
     depends_on:
       - backend
       - frontend
+      - docker-socket
     environment:
       TRAEFIK_API_INSECURE: "true"
       TRAEFIK_ENTRYPOINTS_HTTP_ADDRESS: ":80"
       TRAEFIK_PROVIDERS_DOCKER: "true"
+      TRAEFIK_PROVIDERS_DOCKER_ENDPOINT: "tcp://docker-socket:2375"
       TRAEFIK_PROVIDERS_DOCKER_EXPOSEDBYDEFAULT: "false"
       TRAEFIK_LOG_LEVEL: "DEBUG"
+    networks:
+      - default
+      - secure-docker-socket
     ports:
       - 8080:8080
       - 80:80
       - 443:443
+
+  docker-socket:
+    image: tecnativa/docker-socket-proxy
+    environment:
+      CONTAINERS: 1
+    networks:
+      - secure-docker-socket
+    ports:
+      - 2375
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
+
+networks:
+  secure-docker-socket:
+    external: true

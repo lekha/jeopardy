@@ -36,6 +36,7 @@ git clone git@github.com:lekha/jeopardy
 cd jeopardy
 cp .env.example .env
 # modify .env file to have appropriate secrets
+docker network create secure-docker-socket
 docker-compose build
 docker-compose run --rm --workdir /database backend yoyo apply
 docker-compose up ingress
