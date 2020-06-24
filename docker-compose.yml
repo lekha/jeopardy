@@ -28,3 +28,13 @@ services:
       MYSQL_ROOT_PASSWORD: "root_password"
     ports:
       - 3305:3306
+
+  frontend:
+    build:
+      context: ./frontend
+    depends_on:
+      - backend
+    volumes:
+      - ./frontend:/frontend
+    ports:
+      - "8080:8080"
