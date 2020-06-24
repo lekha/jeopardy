@@ -1,11 +1,11 @@
 version: "3.7"
 services:
 
-  web:
+  backend:
     command: uvicorn jeopardy.app:app --host=0.0.0.0 --reload
     build:
       context: .
-      target: jeopardy_web
+      target: jeopardy_backend
     depends_on:
       - database
     environment:
@@ -14,7 +14,8 @@ services:
       GOOGLE_CLIENT_SECRET:
       SECRET_KEY:
     volumes:
-      - .:/app
+      - ./backend:/app
+      - ./database:/database
     ports:
       - "8000:8000"
 
