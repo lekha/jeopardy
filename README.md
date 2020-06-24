@@ -37,8 +37,8 @@ cd jeopardy
 cp .env.example .env
 # modify .env file to have appropriate secrets
 docker-compose build
-docker-compose run --rm web yoyo apply
-docker-compose up web
+docker-compose run --rm --workdir /database backend yoyo apply
+docker-compose up backend
 curl http://127.0.0.1:8000/health-check
 ```
 
@@ -49,17 +49,17 @@ curl http://127.0.0.1:8000/health-check
 To apply:
 
 ```bash
-docker-compose run --rm --workdir /app/database web yoyo apply
+docker-compose run --rm --workdir /database backend yoyo apply
 ```
 
 To rollback:
 
 ```bash
-docker-compose run --rm --workdir /app/database web yoyo rollback
+docker-compose run --rm --workdir /database backend yoyo rollback
 ```
 
 To see migration status:
 
 ```bash
-docker-compose run --rm --workdir /app/database web yoyo list
+docker-compose run --rm --workdir /database backend yoyo list
 ```
