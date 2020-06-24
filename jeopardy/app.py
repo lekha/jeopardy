@@ -21,5 +21,5 @@ app.include_router(auth.router)
 
 @app.get("/health-check")
 async def health_check():
-    """Verify that app is able to respond incoming requests."""
+    """Verify that app is able to respond to incoming requests."""
     return {"status": "Look at this healthy server go!"}
