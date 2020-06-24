@@ -13,11 +13,16 @@ services:
       GOOGLE_CLIENT_ID:
       GOOGLE_CLIENT_SECRET:
       SECRET_KEY:
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.auth.rule: "Path(`/login`) || Path(`/oauth2callback`)"
+      traefik.http.routers.auth.entrypoints: "http"
+      traefik.http.routers.health.rule: "Path(`/health-check`)"
+      traefik.http.routers.health.entrypoints: "http"
+      traefik.http.services.backend.loadbalancer.server.port: "8000"
     volumes:
       - ./backend:/app
       - ./database:/database
-    ports:
-      - "8000:8000"
 
   database:
     image: mysql:5.7
@@ -34,7 +39,28 @@ services:
       context: ./frontend
     depends_on:
       - backend
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.frontend.rule: "Path(`/`)"
+      traefik.http.routers.frontend.entrypoints: "http"
+      traefik.http.services.frontend.loadbalancer.server.port: "8080"
     volumes:
       - ./frontend:/frontend
+
+  ingress:
+    image: traefik:v2.2
+    depends_on:
+      - backend
+      - frontend
+    environment:
+      TRAEFIK_API_INSECURE: "true"
+      TRAEFIK_ENTRYPOINTS_HTTP_ADDRESS: ":80"
+      TRAEFIK_PROVIDERS_DOCKER: "true"
+      TRAEFIK_PROVIDERS_DOCKER_EXPOSEDBYDEFAULT: "false"
+      TRAEFIK_LOG_LEVEL: "DEBUG"
     ports:
-      - "8080:8080"
+      - 8080:8080
+      - 80:80
+      - 443:443
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro

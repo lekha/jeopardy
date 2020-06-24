@@ -22,11 +22,11 @@ For local development, these settings work well:
 
 * Application type: web application
 * Authorized JavaScript origins:
-  * http://localhost:8000
-  * http://127.0.0.1:8000
+  * http://localhost
+  * http://127.0.0.1
 * Authorized redirect URIs:
-  * http://localhost:8000/oauth2callback
-  * http://127.0.0.1:8000/oauth2callback
+  * http://localhost/oauth2callback
+  * http://127.0.0.1/oauth2callback
 
 ## Development
 
@@ -38,8 +38,8 @@ cp .env.example .env
 # modify .env file to have appropriate secrets
 docker-compose build
 docker-compose run --rm --workdir /database backend yoyo apply
-docker-compose up backend
-curl http://127.0.0.1:8000/health-check
+docker-compose up ingress
+curl http://127.0.0.1/health-check
 ```
 
 ## Database
