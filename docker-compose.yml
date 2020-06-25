@@ -58,7 +58,7 @@ services:
       TRAEFIK_PROVIDERS_DOCKER: "true"
       TRAEFIK_PROVIDERS_DOCKER_ENDPOINT: "tcp://docker-socket:2375"
       TRAEFIK_PROVIDERS_DOCKER_EXPOSEDBYDEFAULT: "false"
-      TRAEFIK_LOG_LEVEL: "DEBUG"
+      TRAEFIK_LOG_LEVEL: "INFO"
     networks:
       - default
       - secure-docker-socket
