@@ -1,19 +1,28 @@
 version: "3.7"
-services:
 
-  web:
-    command: python -m sanic jeopardy.app.app --host=0.0.0.0 --port=8000 --workers=1
+services:
+  backend:
+    command: uvicorn jeopardy.app:app --host=0.0.0.0 --reload
     build:
       context: .
-      target: jeopardy_web
+      target: jeopardy_backend
     depends_on:
       - database
     environment:
       DATABASE_URI: "mysql://web:web_password@database:3306/jeopardy"
+      GOOGLE_CLIENT_ID:
+      GOOGLE_CLIENT_SECRET:
+      SECRET_KEY:
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.auth.rule: "Path(`/login`) || Path(`/oauth2callback`)"
+      traefik.http.routers.auth.entrypoints: "http"
+      traefik.http.routers.health.rule: "Path(`/health-check`)"
+      traefik.http.routers.health.entrypoints: "http"
+      traefik.http.services.backend.loadbalancer.server.port: "8000"
     volumes:
-      - .:/app
-    ports:
-      - "8000:8000"
+      - ./backend:/app
+      - ./database:/database
 
   database:
     image: mysql:5.7
@@ -24,3 +33,52 @@ services:
       MYSQL_ROOT_PASSWORD: "root_password"
     ports:
       - 3305:3306
+
+  frontend:
+    build:
+      context: ./frontend
+    depends_on:
+      - backend
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.frontend.rule: "Path(`/`)"
+      traefik.http.routers.frontend.entrypoints: "http"
+      traefik.http.services.frontend.loadbalancer.server.port: "8080"
+    volumes:
+      - ./frontend:/frontend
+
+  ingress:
+    image: traefik:v2.2
+    depends_on:
+      - backend
+      - frontend
+      - docker-socket
+    environment:
+      TRAEFIK_API_INSECURE: "true"
+      TRAEFIK_ENTRYPOINTS_HTTP_ADDRESS: ":80"
+      TRAEFIK_PROVIDERS_DOCKER: "true"
+      TRAEFIK_PROVIDERS_DOCKER_ENDPOINT: "tcp://docker-socket:2375"
+      TRAEFIK_PROVIDERS_DOCKER_EXPOSEDBYDEFAULT: "false"
+      TRAEFIK_LOG_LEVEL: "DEBUG"
+    networks:
+      - default
+      - secure-docker-socket
+    ports:
+      - 8080:8080
+      - 80:80
+      - 443:443
+
+  docker-socket:
+    image: tecnativa/docker-socket-proxy
+    environment:
+      CONTAINERS: 1
+    networks:
+      - secure-docker-socket
+    ports:
+      - 2375
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+
+networks:
+  secure-docker-socket:
+    external: true
