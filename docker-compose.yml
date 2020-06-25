@@ -8,11 +8,10 @@ services:
       target: jeopardy_backend
     depends_on:
       - database
+    env_file:
+      - .env
     environment:
       DATABASE_URI: "mysql://web:web_password@database:3306/jeopardy"
-      GOOGLE_CLIENT_ID:
-      GOOGLE_CLIENT_SECRET:
-      SECRET_KEY:
     labels:
       traefik.enable: "true"
       traefik.http.routers.auth.rule: "Path(`/login`) || Path(`/oauth2callback`)"
