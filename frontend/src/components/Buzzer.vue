@@ -1,5 +1,13 @@
 <template>
-    <div class='main'>
-        This is the page where the player presses the buzzer.
-    </div>
+  <button class="buzzer">
+    Buzzer
+  </button>
 </template>
+
+<style>
+.buzzer {
+  border-radius: 50%;
+  border-width: 10px;
+  padding: 40px;
+}
+</style>
