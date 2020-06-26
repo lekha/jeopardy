@@ -4,6 +4,15 @@
   </button>
 </template>
 
+<script>
+export default {
+  name: "Buzzer",
+  data() {
+    return {}
+  }
+}
+</script>
+
 <style>
 .buzzer {
   border-radius: 50%;
