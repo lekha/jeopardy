@@ -15,6 +15,11 @@ RUN mkdir /logs
 ADD ./backend/requirements.txt .
 RUN pip install -r requirements.txt
 
+# Replace default yoyo with a custom patched version
+RUN rm /usr/local/bin/yoyo
+RUN rm /usr/local/bin/yoyo-migrate
+RUN ln -sf /database/patched_yoyo.py /usr/local/bin/yoyo
+
 # ADD DATABASE MIGRATION FILES
 ADD ./database /database
 
