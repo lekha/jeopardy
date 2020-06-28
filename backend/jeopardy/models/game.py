@@ -6,7 +6,7 @@ from jeopardy.models.base import BaseModel
 class Game(BaseModel):
     name = fields.CharField(255)
     code = fields.CharField(4, unique=True)
-    owner = fields.ForeignKeyField("models.Player", related_name="games")
+    owner = fields.ForeignKeyField("models.User", related_name="games")
     max_teams = fields.IntField()
     max_players_per_team = fields.IntField()
     is_active = fields.BooleanField(default=False)
