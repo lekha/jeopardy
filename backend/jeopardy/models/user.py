@@ -14,11 +14,11 @@ class AuthProvider(Enum):
 
 
 class AnonymousUserMetadata(PydanticOrmModel):
-    expire_ts: datetime
+    expire_seconds: int = 8*3600  # 8 hours chosen arbitrarily
 
 
 class AnonymousUserMetadataOrm(BaseModel):
-    expire_ts = fields.DatetimeField()
+    expire_seconds = fields.IntField(default=8*3600)
 
     class Meta:
         table = "user_metadata_anonymous"
