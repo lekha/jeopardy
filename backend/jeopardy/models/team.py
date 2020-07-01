@@ -1,9 +1,9 @@
 from tortoise import fields
 
-from jeopardy.models.base import BaseModel
+from jeopardy.models.base import BaseOrmModel
 
 
-class Team(BaseModel):
+class Team(BaseOrmModel):
     game = fields.ForeignKeyField("models.Game", related_name="teams")
     name = fields.CharField(255)
 

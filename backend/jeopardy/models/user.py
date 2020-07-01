@@ -5,7 +5,7 @@ from pydantic import BaseModel as PydanticOrmModel
 from pydantic import constr
 from tortoise import fields
 
-from jeopardy.models.base import BaseModel
+from jeopardy.models.base import BaseOrmModel
 
 
 class AuthProvider(Enum):
@@ -17,7 +17,7 @@ class AnonymousUserMetadata(PydanticOrmModel):
     expire_seconds: int = 8*3600  # 8 hours chosen arbitrarily
 
 
-class AnonymousUserMetadataOrm(BaseModel):
+class AnonymousUserMetadataOrm(BaseOrmModel):
     expire_seconds = fields.IntField(default=8*3600)
 
     class Meta:
@@ -38,7 +38,7 @@ class GoogleUserMetadata(PydanticOrmModel):
     picture: Optional[constr(max_length=255)] = None
 
 
-class GoogleUserMetadataOrm(BaseModel):
+class GoogleUserMetadataOrm(BaseOrmModel):
     subject = fields.CharField(255, unique=True)
     email = fields.CharField(255)
     given_name = fields.CharField(255, null=True)
@@ -63,7 +63,7 @@ class User(PydanticOrmModel):
     google_metadata: Optional[GoogleUserMetadata] = None
 
 
-class UserOrm(BaseModel):
+class UserOrm(BaseOrmModel):
     display_name = fields.CharField(255)
     is_active = fields.BooleanField(default=1)
     auth_provider = fields.CharEnumField(AuthProvider)
