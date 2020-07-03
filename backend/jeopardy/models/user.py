@@ -1,8 +1,5 @@
 from enum import Enum
-from typing import Optional
 
-from pydantic import BaseModel as PydanticOrmModel
-from pydantic import constr
 from tortoise import fields
 
 from jeopardy.models.base import BaseOrmModel
@@ -13,10 +10,6 @@ class AuthProvider(Enum):
     GOOGLE = "google"
 
 
-class AnonymousUserMetadata(PydanticOrmModel):
-    expire_seconds: int = 8*3600  # 8 hours chosen arbitrarily
-
-
 class AnonymousUserMetadataOrm(BaseOrmModel):
     expire_seconds = fields.IntField(default=8*3600)
 
@@ -25,17 +18,6 @@ class AnonymousUserMetadataOrm(BaseOrmModel):
 
     def __str__(self):
         return f"AnonymousUserMetadata({self.id})"
-
-
-class GoogleUserMetadata(PydanticOrmModel):
-    subject: constr(max_length=255)
-    email: constr(max_length=255)
-    given_name: Optional[constr(max_length=255)] = None
-    issuer: constr(max_length=255)
-    family_name: Optional[constr(max_length=255)] = None
-    name: Optional[constr(max_length=255)] = None
-    locale: Optional[constr(max_length=255)] = None
-    picture: Optional[constr(max_length=255)] = None
 
 
 class GoogleUserMetadataOrm(BaseOrmModel):
@@ -53,14 +35,6 @@ class GoogleUserMetadataOrm(BaseOrmModel):
 
     def __str__(self):
         return f"GoogleUserMetadata({self.id}, {self.email})"
-
-
-class User(PydanticOrmModel):
-    display_name: constr(max_length=255)
-    is_active: bool = True
-    auth_provider: AuthProvider
-    anonymous_metadata: Optional[AnonymousUserMetadata] = None
-    google_metadata: Optional[GoogleUserMetadata] = None
 
 
 class UserOrm(BaseOrmModel):
