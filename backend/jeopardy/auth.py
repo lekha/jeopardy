@@ -1,6 +1,8 @@
 from os import getenv
 
 from authlib.integrations.starlette_client import OAuth
+from fastapi import Depends
+from fastapi import Request
 
 from jeopardy.models.user import GoogleUserMetadataOrm
 from jeopardy.models.user import UserOrm
@@ -19,6 +21,24 @@ oauth.register(
         "scope": "openid email profile",
     }
 )
+
+
+async def login_user(request: Request, user: UserOrm) -> None:
+    user_token = await token_from_user(user)
+    request.session["user_token"] = user_token
+
+
+async def logout_user(request: Request) -> None:
+    if "user_token" in request.session:
+        request.session.pop("user_token")
+
+
+async def token_from_user(user: UserOrm) -> str:
+    return str(user.id)
+
+
+async def user_from_token(token: str) -> UserOrm:
+    return await UserOrm.get_or_none(id=token)
 
 
 async def user_from_google_metadata(

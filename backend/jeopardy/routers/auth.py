@@ -1,6 +1,8 @@
 from fastapi import APIRouter
 from fastapi import Request
 
+from jeopardy.auth import login_user
+from jeopardy.auth import logout_user
 from jeopardy.auth import oauth
 from jeopardy.auth import user_from_google_metadata
 from jeopardy.schema.user import GoogleUserMetadata
@@ -21,4 +23,10 @@ async def callback(request: Request):
     raw_metadata = await oauth.google.parse_id_token(request, token)
     metadata = GoogleUserMetadata(**raw_metadata)
     user = await user_from_google_metadata(metadata)
+    await login_user(request, user)
     return {"user": user}
+
+
+@router.api_route("/logout")
+async def logout(request: Request):
+    await logout_user(request)

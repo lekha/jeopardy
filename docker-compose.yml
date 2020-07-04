@@ -14,7 +14,7 @@ services:
       DATABASE_URI: "mysql://web:web_password@database:3306/jeopardy"
     labels:
       traefik.enable: "true"
-      traefik.http.routers.auth.rule: "Path(`/login`) || Path(`/oauth2callback`)"
+      traefik.http.routers.auth.rule: "Path(`/login`) || Path(`/oauth2callback`) || Path(`/logout`)"
       traefik.http.routers.auth.entrypoints: "http"
       traefik.http.routers.health.rule: "Path(`/health-check`)"
       traefik.http.routers.health.entrypoints: "http"
