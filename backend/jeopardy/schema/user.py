@@ -20,6 +20,9 @@ class GoogleUserMetadata(BaseModel):
     locale: Optional[constr(max_length=255)] = None
     picture: Optional[constr(max_length=255)] = None
 
+    def __init__(self, *, sub: str = None, iss: str = None, **data):
+        super().__init__(subject=sub, issuer=iss, **data)
+
 
 class User(BaseModel):
     display_name: constr(max_length=255)

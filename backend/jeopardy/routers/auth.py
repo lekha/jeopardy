@@ -2,6 +2,8 @@ from fastapi import APIRouter
 from fastapi import Request
 
 from jeopardy.auth import oauth
+from jeopardy.auth import user_from_google_metadata
+from jeopardy.schema.user import GoogleUserMetadata
 
 
 router = APIRouter()
@@ -16,7 +18,7 @@ async def login(request: Request):
 @router.api_route("/oauth2callback")
 async def callback(request: Request):
     token = await oauth.google.authorize_access_token(request)
-    user = await oauth.google.parse_id_token(request, token)
-    import logging
-    logging.error(user)
-    return user
+    raw_metadata = await oauth.google.parse_id_token(request, token)
+    metadata = GoogleUserMetadata(**raw_metadata)
+    user = await user_from_google_metadata(metadata)
+    return {"user": user}
