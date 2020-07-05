@@ -1,7 +1,7 @@
 import Vue from "vue";
 import Router from "vue-router";
 import Buzzer from "@/components/buzzer.vue";
-import Home from "@/components/home.vue";
+import Home from "@/views/home.vue";
 
 Vue.use(Router);
 
@@ -15,7 +15,7 @@ export default new Router({
     },
     {
       path: "/buzzer",
-      name: "Buzzer",
+      name: "buzzer",
       component: Buzzer
     }
   ]
