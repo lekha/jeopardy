@@ -38,7 +38,7 @@ class GoogleUserMetadataOrm(BaseOrmModel):
 
 
 class UserOrm(BaseOrmModel):
-    display_name = fields.CharField(255)
+    username = fields.CharField(255)
     is_active = fields.BooleanField(default=1)
     auth_provider = fields.CharEnumField(AuthProvider)
     anonymous_metadata = fields.ForeignKeyField(
@@ -58,4 +58,4 @@ class UserOrm(BaseOrmModel):
         table = "users"
 
     def __str__(self):
-        return f"User({self.id}, {self.display_name})"
+        return f"User({self.id}, {self.username})"

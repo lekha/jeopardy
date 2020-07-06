@@ -61,9 +61,9 @@ async def user_from_google_metadata(
 
     # Fetch old user or create new one
     if old_metadata is None:
-        display_name = metadata.given_name or metadata.email
+        username = metadata.given_name or metadata.email
         user = await UserOrm.create(
-            display_name=display_name,
+            username=username,
             auth_provider="google",
             google_metadata=metadata,
         )
