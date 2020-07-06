@@ -25,8 +25,8 @@ For local development, these settings work well:
   * http://localhost
   * http://127.0.0.1
 * Authorized redirect URIs:
-  * http://localhost/oauth2callback
-  * http://127.0.0.1/oauth2callback
+  * http://localhost/user/oauth2callback
+  * http://127.0.0.1/user/oauth2callback
 
 ## Development
 

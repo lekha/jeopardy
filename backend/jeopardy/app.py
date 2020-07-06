@@ -16,7 +16,7 @@ register_tortoise(
     modules = {"models": ["jeopardy.models"]},
     add_exception_handlers=True,
 )
-app.include_router(auth.router)
+app.include_router(auth.router, prefix="/user")
 
 
 @app.get("/health-check")

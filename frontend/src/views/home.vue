@@ -1,6 +1,6 @@
 <template>
 <div class="home">
-  <a href="/login">Log In with Google</a>
+  <a href="/user/login">Log In with Google</a>
 </div>
 </template>
 
