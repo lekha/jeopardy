@@ -21,6 +21,7 @@ INSTALL_DEPS = (
     "fastapi",
     "httpx",
     "itsdangerous",
+    "pyjwt[crypto]",
     "tortoise-orm",
     "uvicorn",
     "yoyo-migrations",
