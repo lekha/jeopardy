@@ -19,6 +19,8 @@ services:
       traefik.http.routers.health.rule: "Path(`/health-check`)"
       traefik.http.routers.health.entrypoints: "http"
       traefik.http.services.backend.loadbalancer.server.port: "8000"
+    ports:
+      - 8000:8000
     volumes:
       - ./backend:/app
       - ./database:/database

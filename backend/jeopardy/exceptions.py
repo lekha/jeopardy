@@ -4,7 +4,7 @@ from fastapi.security import SecurityScopes
 
 
 def _auth_header(required: SecurityScopes, error_code: str = None) -> str:
-    if required.scope_str:
+    if required is not None:
         auth_header = f'Bearer scope="{required.scope_str}"'
     else:
         auth_header = f'Bearer realm="api"'

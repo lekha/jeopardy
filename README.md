@@ -7,6 +7,7 @@ A Python application for creating and playing Jeopardy games.
 * Docker
 * Docker-compose
 * Google oauth credentials
+* Create RSA key pair
 
 ### Create Google OAuth Credentials
 
@@ -27,6 +28,13 @@ For local development, these settings work well:
 * Authorized redirect URIs:
   * http://localhost/user/oauth2callback
   * http://127.0.0.1/user/oauth2callback
+
+### Create RSA Key Pair
+
+```bash
+openssl genrsa -out jwt-rsa256 4096
+openssl rsa -in jwt-rsa256 -pubout > jwt-rsa256.pub
+```
 
 ## Development
 

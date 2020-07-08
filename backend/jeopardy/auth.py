@@ -1,8 +1,11 @@
+from datetime import datetime
+from datetime import timedelta
 from os import getenv
 
 from authlib.integrations.starlette_client import OAuth
 from fastapi import Depends
 from fastapi import Request
+import jwt
 
 from jeopardy.models.user import GoogleUserMetadataOrm
 from jeopardy.models.user import UserOrm
@@ -23,6 +26,11 @@ oauth.register(
 )
 
 
+class Nobody:
+    id = None
+    is_active = False
+
+
 async def login_user(request: Request, user: UserOrm) -> None:
     user_token = await token_from_user(user)
     request.session["user_token"] = user_token
@@ -34,11 +42,38 @@ async def logout_user(request: Request) -> None:
 
 
 async def token_from_user(user: UserOrm) -> str:
-    return str(user.id)
+    """Create a new JWT associated with a user."""
+    now = datetime.utcnow()
+    time_to_expiration = timedelta(seconds=3600)
+    payload = {
+        "iat": now,
+        "exp": now + time_to_expiration,
+        "sub": user.id,
+        "roles": ["player"],
+        "name": user.username,
+    }
+
+    unescaped_private_key = getenv("RSA_PRIVATE_KEY")
+    private_key = unescaped_private_key.encode("utf-8").decode("unicode_escape")
+
+    token_bytes = jwt.encode(payload, private_key, algorithm="RS256")
+    return token_bytes.decode("utf-8")
 
 
 async def user_from_token(token: str) -> UserOrm:
-    return await UserOrm.get_or_none(id=token)
+    """Determine the user associated with a JWT."""
+    unescaped_public_key = getenv("RSA_PUBLIC_KEY")
+    public_key = unescaped_public_key.encode("utf-8").decode("unicode_escape")
+
+    try:
+        token_bytes = token.encode("utf-8")
+        payload = jwt.decode(token_bytes, public_key, algorithms="RS256")
+        user_id = payload["sub"]
+        user = await UserOrm.get_or_none(id=user_id)
+    except:
+        user = Nobody
+
+    return user
 
 
 async def user_from_google_metadata(
