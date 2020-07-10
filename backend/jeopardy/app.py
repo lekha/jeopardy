@@ -5,11 +5,13 @@ from fastapi import FastAPI
 from starlette.middleware.sessions import SessionMiddleware
 from tortoise.contrib.fastapi import register_tortoise
 
+from jeopardy.middleware import AuthenticationMiddleware
 from jeopardy.routers import auth
 
 
 app = FastAPI(title="jeopardy")
 app.add_middleware(SessionMiddleware, secret_key=getenv("SECRET_KEY"))
+app.add_middleware(AuthenticationMiddleware)
 register_tortoise(
     app,
     db_url = getenv("DATABASE_URI"),
