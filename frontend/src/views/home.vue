@@ -1,8 +1,13 @@
 <template>
 <div class="home">
   <template v-if="user">
-    Welcome, {{ user.name }}
-    <a v-if="user" href="/user/logout">Log Out</a>
+    <p>Welcome, {{ user.name }}</p>
+    <p><a href="/user/logout">Log Out</a></p>
+    <ul>
+      <li><a href="#">Create or Modify a Board</a></li>
+      <li><a href="#">Start a New Game</a></li>
+      <li><a href="#">Join a Game</a></li>
+    </ul>
   </template>
   <a v-else :href="'/user/login?next='+endpoint">Log In with Google</a>
 </div>
