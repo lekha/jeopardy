@@ -1,5 +1,6 @@
 from fastapi import APIRouter
 from fastapi import Request
+from fastapi import Response
 from starlette.responses import RedirectResponse
 
 from jeopardy.auth import login_user
@@ -25,12 +26,13 @@ async def callback(request: Request):
     raw_metadata = await oauth.google.parse_id_token(request, token)
     metadata = GoogleUserMetadata(**raw_metadata)
     user = await user_from_google_metadata(metadata)
-    await login_user(request, user)
 
     next = request.session.pop("next")
-    return RedirectResponse(url=f"/?next={next}", status_code=302)
+    response = RedirectResponse(url=f"/?next={next}", status_code=302)
+    await login_user(response, user)
+    return response
 
 
 @router.api_route("/logout")
-async def logout(request: Request):
-    await logout_user(request)
+async def logout(response: Response):
+    await logout_user(response)

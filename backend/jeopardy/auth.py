@@ -4,7 +4,7 @@ from os import getenv
 
 from authlib.integrations.starlette_client import OAuth
 from fastapi import Depends
-from fastapi import Request
+from fastapi import Response
 import jwt
 
 from jeopardy.models.user import GoogleUserMetadataOrm
@@ -31,14 +31,13 @@ class Nobody:
     is_active = False
 
 
-async def login_user(request: Request, user: UserOrm) -> None:
+async def login_user(response: Response, user: UserOrm) -> None:
     user_token = await token_from_user(user)
-    request.session["user_token"] = user_token
+    response.set_cookie("user", value=user_token)
 
 
-async def logout_user(request: Request) -> None:
-    if "user_token" in request.session:
-        request.session.pop("user_token")
+async def logout_user(response: Response) -> None:
+    response.delete_cookie("user")
 
 
 async def token_from_user(user: UserOrm) -> str:
