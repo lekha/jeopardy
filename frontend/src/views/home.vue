@@ -9,10 +9,24 @@ export default {
   name: "Home",
   data() {
     return {
-      endpoint: this.$route.name
+      endpoint: this.$route.name,
+      user: ""
     }
   },
   methods: {
+    currentUser() {
+      var publicKey = process.env.VUE_APP_PUBLIC_KEY;
+      publicKey = publicKey.replace(/\\n/g, "\n");
+      var encodedUser = this.$cookies.get("user");
+      var user;
+      try {
+        user = this.$jwt.verify(encodedUser, publicKey);
+      } catch(err) {
+        user = "";
+        console.log(err);
+      }
+      return user;
+    },
     redirectToNext() {
       var next = this.$route.query.next;
       if (next) {
@@ -22,6 +36,7 @@ export default {
   },
   beforeMount() {
     this.redirectToNext();
+    this.user = this.currentUser();
   }
 }
 </script>

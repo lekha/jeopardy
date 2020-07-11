@@ -40,6 +40,8 @@ services:
       context: ./frontend
     depends_on:
       - backend
+    env_file:
+      - .env
     labels:
       traefik.enable: "true"
       traefik.http.routers.frontend.rule: "PathPrefix(`/`)"
