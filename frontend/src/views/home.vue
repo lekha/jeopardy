@@ -1,6 +1,10 @@
 <template>
 <div class="home">
-  <a :href="'/user/login?next='+endpoint">Log In with Google</a>
+  <template v-if="user">
+    Welcome, {{ user.name }}
+    <a v-if="user" href="/user/logout">Log Out</a>
+  </template>
+  <a v-else :href="'/user/login?next='+endpoint">Log In with Google</a>
 </div>
 </template>
 

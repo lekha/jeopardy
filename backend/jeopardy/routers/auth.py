@@ -1,6 +1,5 @@
 from fastapi import APIRouter
 from fastapi import Request
-from fastapi import Response
 from starlette.responses import RedirectResponse
 
 from jeopardy.auth import login_user
@@ -34,5 +33,7 @@ async def callback(request: Request):
 
 
 @router.api_route("/logout")
-async def logout(response: Response):
+async def logout():
+    response = RedirectResponse(url=f"/?next=home", status_code=302)
     await logout_user(response)
+    return response
