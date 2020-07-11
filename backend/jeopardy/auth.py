@@ -1,9 +1,11 @@
 from datetime import datetime
 from datetime import timedelta
 from os import getenv
+from typing import Optional
 
 from authlib.integrations.starlette_client import OAuth
 from fastapi import Depends
+from fastapi import Header
 from fastapi import Response
 import jwt
 
@@ -105,4 +107,15 @@ async def user_from_google_metadata(
         await metadata.fetch_related("user")
         user = metadata.user[0]
 
+    return user
+
+
+async def current_user(authorization: Optional[str] = Header(None)):
+    """Determine the currently-logged in user from the request header."""
+    try:
+        user = await user_from_token(authorization)
+        if not user.is_active:
+            user = Nobody
+    except:
+        user = Nobody
     return user
