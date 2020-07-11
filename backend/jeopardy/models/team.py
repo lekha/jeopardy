@@ -3,8 +3,8 @@ from tortoise import fields
 from jeopardy.models.base import BaseOrmModel
 
 
-class Team(BaseOrmModel):
-    game = fields.ForeignKeyField("models.Game", related_name="teams")
+class TeamOrm(BaseOrmModel):
+    game = fields.ForeignKeyField("models.GameOrm", related_name="teams")
     name = fields.CharField(255)
 
     class Meta:
