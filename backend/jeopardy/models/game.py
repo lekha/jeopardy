@@ -1,6 +1,13 @@
+from enum import Enum
+
 from tortoise import fields
 
 from jeopardy.models.base import BaseOrmModel
+
+
+class RoundClass(Enum):
+    SINGLE = "single"
+    DOUBLE = "double"
 
 
 class GameOrm(BaseOrmModel):
@@ -16,3 +23,71 @@ class GameOrm(BaseOrmModel):
 
     def __str__(self):
         return f"Game({self.id}, {self.code}, {self.name})"
+
+
+class RoundOrm(BaseOrmModel):
+    game = fields.ForeignKeyField(
+        "models.GameOrm",
+        related_name="rounds",
+        on_delete="CASCADE",
+    )
+    class = fields.CharEnumField(RoundClass)
+    categories = fields.IntField(default=6)
+    tiles_per_category = fields.IntField(default=5)
+
+    class Meta:
+        table = "rounds"
+        unique_together = (("game", "class"))
+
+    def __str__(self):
+        return f"Round({self.id}, {self.game})"
+
+
+class CategoryOrm(BaseOrmModel):
+    round = fields.ForeignKeyField(
+        "models.RoundOrm",
+        related_name="categories",
+        on_delete="CASCADE",
+    )
+    name = fields.CharField(255)
+    ordinal = fields.IntField()
+
+    class Meta:
+        table = "categories"
+        unique_together = (("round", "name"), ("round", "ordinal"))
+
+    def __str__(self):
+        return f"Category({self.id}, {self.name})"
+
+
+class TileOrm(BaseOrmModel):
+    category = fields.ForeignKeyField(
+        "models.CategoryOrm",
+        related_name="tiles",
+        on_delete="CASCADE",
+    )
+    trivia = fields.ForeignKeyField(
+        "models.TriviaOrm",
+        related_name="tiles",
+        on_delete="RESTRICT",
+    )
+    ordinal = fields.IntField()
+    is_daily_double = fields.BooleanField(default=False)
+
+    class Meta:
+        table = "tiles"
+        unique_together = (("category", "trivia"), ("category", "ordinal"))
+
+    def __str__(self):
+        return f"Tile({self.id}, {self.category}, {self.points})"
+
+
+class TriviaOrm(BaseOrmModel):
+    answer = fields.TextField()
+    question = fields.TextField()
+
+    class Meta:
+        table = "trivia"
+
+    def __str__(self):
+        return f"Trivia({self.id}, {self.answer})"
