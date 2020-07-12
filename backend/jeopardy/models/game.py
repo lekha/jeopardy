@@ -8,6 +8,7 @@ from jeopardy.models.base import BaseOrmModel
 class RoundClass(Enum):
     SINGLE = "single"
     DOUBLE = "double"
+    FINAL  = "final"
 
 
 class GameOrm(BaseOrmModel):
@@ -32,8 +33,7 @@ class RoundOrm(BaseOrmModel):
         on_delete="CASCADE",
     )
     class = fields.CharEnumField(RoundClass)
-    categories = fields.IntField(default=6)
-    tiles_per_category = fields.IntField(default=5)
+    ordinal = fields.IntField()
 
     class Meta:
         table = "rounds"
@@ -43,9 +43,25 @@ class RoundOrm(BaseOrmModel):
         return f"Round({self.id}, {self.game})"
 
 
-class CategoryOrm(BaseOrmModel):
+class BoardOrm(BaseOrmModel):
     round = fields.ForeignKeyField(
         "models.RoundOrm",
+        related_name="board",
+        on_delete="CASCADE",
+    )
+    categories = fields.IntField(default=6)
+    tiles_per_category = fields.IntField(default=5)
+
+    class Meta:
+        table = "boards"
+
+    class __str__(self):
+        return f"Board({self.id, self.round})"
+
+
+class CategoryOrm(BaseOrmModel):
+    board = fields.ForeignKeyField(
+        "models.BoardOrm",
         related_name="categories",
         on_delete="CASCADE",
     )
@@ -54,7 +70,7 @@ class CategoryOrm(BaseOrmModel):
 
     class Meta:
         table = "categories"
-        unique_together = (("round", "name"), ("round", "ordinal"))
+        unique_together = (("board", "name"), ("board", "ordinal"))
 
     def __str__(self):
         return f"Category({self.id}, {self.name})"

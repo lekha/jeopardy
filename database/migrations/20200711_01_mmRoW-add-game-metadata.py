@@ -25,11 +25,24 @@ CREATE TABLE rounds (
     created_ts DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
     updated_ts DATETIME(6) NOT NULL  DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
     game_id BIGINT NOT NULL,
-    class ENUM("single", "double") NOT NULL,
-    categories INT(11) NOT NULL DEFAULT 6,
-    tiles_per_category INT(11) NOT NULL DEFAULT 5,
+    class ENUM("single", "double", "final") NOT NULL,
+    ordinal INT(11) NOT NULL,
     CONSTRAINT fk_game_round FOREIGN KEY (game_id) REFERENCES games (id) ON DELETE CASCADE,
     UNIQUE KEY unique_game_class (game_id, class)
+)
+CHARACTER SET utf8mb4;
+"""
+
+
+create_board = """
+CREATE TABLE boards (
+    id BIGINT NOT NULL PRIMARY KEY AUTO_INCREMENT,
+    created_ts DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+    updated_ts DATETIME(6) NOT NULL  DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
+    round_id BIGINT NOT NULL,
+    categories INT(11) NOT NULL DEFAULT 6,
+    tiles_per_category INT(11) NOT NULL DEFAULT 5,
+    CONSTRAINT fk_round_board FOREIGN KEY (round_id) REFERENCES rounds (id) ON DELETE CASCADE
 )
 CHARACTER SET utf8mb4;
 """
@@ -40,12 +53,12 @@ CREATE TABLE categories (
     id BIGINT NOT NULL PRIMARY KEY AUTO_INCREMENT,
     created_ts DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
     updated_ts DATETIME(6) NOT NULL  DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
-    round_id BIGINT NOT NULL,
+    board_id BIGINT NOT NULL,
     name VARCHAR(255) NOT NULL,
     ordinal INT(11) NOT NULL,
-    CONSTRAINT fk_round_category FOREIGN KEY (round_id) REFERENCES rounds (id) ON DELETE CASCADE,
-    UNIQUE KEY unique_round_name (round_id, name),
-    UNIQUE KEY unique_round_ordinal (round_id, ordinal)
+    CONSTRAINT fk_board_category FOREIGN KEY (board_id) REFERENCES boards (id) ON DELETE CASCADE,
+    UNIQUE KEY unique_board_name (board_id, name),
+    UNIQUE KEY unique_board_ordinal (board_id, ordinal)
 )
 CHARACTER SET utf8mb4;
 """
@@ -71,6 +84,7 @@ CHARACTER SET utf8mb4;
 
 drop_trivia   = "DROP TABLE trivia"
 drop_round    = "DROP TABLE rounds"
+drop_board    = "DROP TABLE boards"
 drop_category = "DROP TABLE categories"
 drop_tile     = "DROP TABLE tiles"
 
@@ -78,6 +92,7 @@ drop_tile     = "DROP TABLE tiles"
 steps = [
     step(create_trivia,   drop_trivia),
     step(create_round,    drop_round),
+    step(create_board,    drop_board),
     step(create_category, drop_category),
     step(create_tile,     drop_tile),
 ]
