@@ -7,6 +7,7 @@ from tortoise.contrib.fastapi import register_tortoise
 
 from jeopardy.middleware import AuthenticationMiddleware
 from jeopardy.routers import auth
+from jeopardy.routers import play
 
 
 app = FastAPI(title="jeopardy")
@@ -19,6 +20,7 @@ register_tortoise(
     add_exception_handlers=True,
 )
 app.include_router(auth.router, prefix="/user")
+app.include_router(play.router, prefix="/api/v1")
 
 
 @app.get("/health-check")
