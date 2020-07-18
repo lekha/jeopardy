@@ -1,0 +1,81 @@
+from tortoise import fields
+from tortoise.models import ModelMeta
+
+from jeopardy.models.base import BaseOrmModel
+
+
+class ActionOrmModelMeta(ModelMeta):
+    def __new__(cls, name, bases, attrs):
+        extra_foreign_keys = {
+            "game": "models.GameOrm",
+            "tile": "models.TileOrm",
+            "team": "models.TeamOrm",
+            "user": "models.UserOrm",
+        }
+        related_name = attrs.get("_related_name")
+        for field_name, model_name in extra_foreign_keys.items():
+            attrs[field_name] = fields.ForeignKeyField(
+                model_name,
+                related_name=related_name,
+            )
+
+        return super().__new__(cls, name, bases, attrs)
+
+
+class ActionOrmModel(BaseOrmModel, metaclass=ActionOrmModelMeta):
+    """Automatically add default foreign keys to all actions."""
+    pass
+
+
+class NoAction:
+    type_ = None
+
+
+class ChoiceOrm(ActionOrmModel):
+    _related_name = "choices"
+    type_ = ActionType.CHOICE
+
+    class Meta:
+        table = "action_choices"
+        unique_together = (("game", "tile"))
+
+    def __str__(self):
+        return f"Choice({self.id}, {self.game})"
+
+
+class BuzzOrm(ActionOrmModel):
+    _related_name = "buzzes"
+    type_ = ActionType.BUZZ
+
+    class Meta:
+        table = "action_buzzes"
+        unique_together = (("game", "tile", "team"))
+
+    def __str__(self):
+        return f"Buzz({self.id}, {self.game})"
+
+
+class ResponseOrm(ActionOrmModel):
+    _related_name = "responses"
+    type_ = ActionType.RESPONSE
+    is_correct = fields.BooleanField()
+
+    class Meta:
+        table = "action_responses"
+        unique_together = (("game", "tile", "team"))
+
+    def __str__(self):
+        return f"Response({self.id}, {self.game})"
+
+
+class WagerOrm(ActionOrmModel):
+    _related_name = "wagers"
+    type_ = ActionType.WAGER
+    amount = fields.IntField()
+
+    class Meta:
+        table = "action_wagers"
+        unique_together = (("game", "tile", "team"))
+
+    def __str__(self):
+        return f"Wager({self.id}, {self.game})"
