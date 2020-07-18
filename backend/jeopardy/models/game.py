@@ -32,12 +32,12 @@ class RoundOrm(BaseOrmModel):
         related_name="rounds",
         on_delete="CASCADE",
     )
-    class = fields.CharEnumField(RoundClass)
+    class_ = fields.CharEnumField(RoundClass, source_field="class")
     ordinal = fields.IntField()
 
     class Meta:
         table = "rounds"
-        unique_together = (("game", "class"))
+        unique_together = (("game", "class_"))
 
     def __str__(self):
         return f"Round({self.id}, {self.game})"
@@ -49,13 +49,19 @@ class BoardOrm(BaseOrmModel):
         related_name="board",
         on_delete="CASCADE",
     )
-    categories = fields.IntField(default=6)
-    tiles_per_category = fields.IntField(default=5)
+    num_categories = fields.IntField(
+        default=6,
+        source_field="categories"
+    )
+    num_tiles_per_category = fields.IntField(
+        default=5,
+        source_field="tiles_per_category"
+    )
 
     class Meta:
         table = "boards"
 
-    class __str__(self):
+    def __str__(self):
         return f"Board({self.id, self.round})"
 
 
