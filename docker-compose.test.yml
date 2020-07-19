@@ -10,6 +10,10 @@ services:
       - test_database
     environment:
       DATABASE_URI: "mysql://web:web_password@test_database:3306/jeopardy"
+      MIGRATIONS_DIR: "/database/migrations"
+    volumes:
+      - ./backend:/app
+      - ./database:/database
 
   test_database:
     image: mysql:5.7
