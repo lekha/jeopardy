@@ -1,7 +1,16 @@
+from enum import Enum
+
 from tortoise import fields
 from tortoise.models import ModelMeta
 
 from jeopardy.models.base import BaseOrmModel
+
+
+class ActionType(Enum):
+    BUZZ     = "buzz"
+    CHOICE   = "choice"
+    RESPONSE = "response"
+    WAGER    = "wager"
 
 
 class ActionOrmModelMeta(ModelMeta):

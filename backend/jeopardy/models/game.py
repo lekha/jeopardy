@@ -2,6 +2,7 @@ from enum import Enum
 
 from tortoise import fields
 
+from jeopardy.models.action import ActionType
 from jeopardy.models.base import BaseOrmModel
 
 
@@ -17,7 +18,22 @@ class GameOrm(BaseOrmModel):
     owner = fields.ForeignKeyField("models.UserOrm", related_name="games")
     max_teams = fields.IntField()
     max_players_per_team = fields.IntField()
-    is_active = fields.BooleanField(default=False)
+    is_started = fields.BooleanField(default=False)
+    is_finished = fields.BooleanField(default=False)
+    next_message_id = fields.BigIntField(null=True)
+    next_round = fields.ForeignKeyField(
+        "models.RoundOrm",
+        related_name=None,
+        on_delete="RESTRICT",
+        null=True,
+    )
+    next_action_type = fields.CharEnumField(ActionType, null=True)
+    next_chooser = fields.ForeignKeyField(
+        "models.TeamOrm",
+        related_name=None,
+        on_delete="RESTRICT",
+        null=True,
+    )
 
     class Meta:
         table = "games"
