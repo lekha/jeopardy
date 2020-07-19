@@ -28,3 +28,8 @@ ADD ./backend .
 RUN pip install -e .
 
 CMD ["bash"]
+
+FROM jeopardy_backend as test_jeopardy_backend
+
+# Setup test infrastructure
+RUN pip install -r test_requirements.txt

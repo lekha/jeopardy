@@ -51,6 +51,14 @@ docker-compose up ingress
 curl http://127.0.0.1/health-check
 ```
 
+## Tests
+
+Tests can be run locally via Docker:
+```bash
+docker-compose -f docker-compose.test.yml build
+docker-compose -f docker-compose.test.yml up test_backend
+```
+
 ## Database
 
 ### Run migrations

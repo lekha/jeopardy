@@ -1,0 +1,20 @@
+version: "3.7"
+
+services:
+  test_backend:
+    command: pytest -v
+    build:
+      context: .
+      target: test_jeopardy_backend
+    depends_on:
+      - test_database
+    environment:
+      DATABASE_URI: "mysql://web:web_password@test_database:3306/jeopardy"
+
+  test_database:
+    image: mysql:5.7
+    environment:
+      MYSQL_DATABASE: "jeopardy"
+      MYSQL_USER: "web"
+      MYSQL_PASSWORD: "web_password"
+      MYSQL_ROOT_PASSWORD: "root_password"
