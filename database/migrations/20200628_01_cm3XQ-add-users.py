@@ -80,6 +80,10 @@ CREATE TABLE players (
 )
 CHARACTER SET utf8mb4;
 
+INSERT INTO players (id, created_ts, updated_ts, name)
+     SELECT id, created_ts, updated_ts, display_name
+       FROM users;
+
 ALTER TABLE games
         ADD CONSTRAINT fk_games_players FOREIGN KEY (owner_id) REFERENCES players (id) ON DELETE CASCADE;
 """

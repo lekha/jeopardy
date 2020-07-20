@@ -22,7 +22,7 @@ CHARACTER SET utf8mb4;
 """
 
 
-drop_user_tokens = "DROP user_tokens;"
+drop_user_tokens = "DROP TABLE user_tokens;"
 
 
 steps = [
