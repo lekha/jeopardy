@@ -9,6 +9,9 @@ from yoyo.backends import MySQLBackend
 from yoyo.connections import parse_uri
 from yoyo.migrations import default_migration_table
 
+from jeopardy.models.game import GameOrm
+from jeopardy.models.user import UserOrm
+
 
 def _get_backend(uri, migration_table=default_migration_table):
     """Patch of yoyo's original get_backend() function.
@@ -54,3 +57,51 @@ def database_schema(database):
 
     with backend.lock():
         backend.rollback_migrations(backend.to_rollback(migrations))
+
+
+@pytest.fixture
+async def google_user(database_schema):
+    user = UserOrm(
+        username="test_google_user",
+        is_active=True,
+        auth_provider="google",
+    )
+    await user.save()
+    yield user
+
+
+@pytest.fixture
+async def inactive_user(database_schema):
+    user = UserOrm(
+        username="test_inactive_user",
+        is_active=False,
+        auth_provider="google",
+    )
+    await user.save()
+    yield user
+
+
+@pytest.fixture
+async def anonymous_user(database_schema):
+    user = UserOrm(
+        username="test_anonymous_user",
+        is_active=True,
+        auth_provider="none",
+    )
+    await user.save()
+    yield user
+
+
+@pytest.fixture
+async def game(database_schema, google_user):
+    _game = GameOrm(
+        name="Test Game",
+        code="TEST",
+        owner=google_user,
+        max_teams=3,
+        max_players_per_team=3,
+        is_started=True,
+        is_finished=False,
+    )
+    await _game.save()
+    yield _game
