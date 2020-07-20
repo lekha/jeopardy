@@ -1,5 +1,6 @@
 from os import getenv
 
+import asyncio
 import pytest
 from pymysql.constants import CLIENT
 from tortoise import Tortoise
@@ -10,6 +11,7 @@ from yoyo.connections import parse_uri
 from yoyo.migrations import default_migration_table
 
 from jeopardy.models.game import GameOrm
+from jeopardy.models.team import TeamOrm
 from jeopardy.models.user import UserOrm
 
 
@@ -33,7 +35,14 @@ def _get_backend(uri, migration_table=default_migration_table):
     return backend
 
 
-@pytest.fixture
+@pytest.yield_fixture(scope="session")
+def event_loop(request):
+    loop = asyncio.get_event_loop_policy().new_event_loop()
+    yield loop
+    loop.close()
+
+
+@pytest.fixture(scope="session")
 async def database():
     database_uri = getenv("DATABASE_URI")
     await Tortoise.init(
@@ -105,3 +114,10 @@ async def game(database_schema, google_user):
     )
     await _game.save()
     yield _game
+
+
+@pytest.fixture
+async def team(database_schema, game):
+    _team = TeamOrm(game=game, name="Test Team")
+    await _team.save()
+    yield _team
