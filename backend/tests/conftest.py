@@ -10,7 +10,18 @@ from yoyo.backends import MySQLBackend
 from yoyo.connections import parse_uri
 from yoyo.migrations import default_migration_table
 
+from jeopardy.models.action import BuzzOrm
+from jeopardy.models.action import ChoiceOrm
+from jeopardy.models.action import NoAction
+from jeopardy.models.action import ResponseOrm
+from jeopardy.models.action import WagerOrm
+from jeopardy.models.game import BoardOrm
+from jeopardy.models.game import CategoryOrm
 from jeopardy.models.game import GameOrm
+from jeopardy.models.game import RoundClass
+from jeopardy.models.game import RoundOrm
+from jeopardy.models.game import TileOrm
+from jeopardy.models.game import TriviaOrm
 from jeopardy.models.team import TeamOrm
 from jeopardy.models.user import UserOrm
 
@@ -117,7 +128,205 @@ async def game(database_schema, google_user):
 
 
 @pytest.fixture
+async def round(database_schema, game):
+    _round = RoundOrm(game=game, class_=RoundClass.SINGLE, ordinal=1)
+    await _round.save()
+    yield _round
+
+
+@pytest.fixture
+async def single_round(database_schema, round):
+    yield round
+
+
+@pytest.fixture
+async def final_round(database_schema, round):
+    round.class_ = RoundClass.FINAL
+    round.ordinal = 3
+    await round.save()
+    yield round
+
+
+@pytest.fixture
+async def tile(database, round):
+    board = BoardOrm(
+        round=round,
+        num_categories=2,
+        num_tiles_per_category=2,
+    )
+    await board.save()
+
+    category = CategoryOrm(
+        board=board,
+        name="Test Category",
+        ordinal=0,
+    )
+    await category.save()
+
+    trivia = TriviaOrm(
+        answer="Test answer",
+        question="Test question?",
+    )
+    await trivia.save()
+
+    _tile = TileOrm(
+        category=category,
+        trivia=trivia,
+        ordinal=0,
+    )
+    await _tile.save()
+    yield _tile
+
+
+@pytest.fixture
+async def normal_tile(database_schema, tile):
+    yield tile
+
+
+@pytest.fixture
+async def daily_double_tile(database_schema, tile):
+    tile.is_daily_double = True
+    await tile.save()
+    yield tile
+
+
+@pytest.fixture
+async def tile_1(database_schema, tile):
+    yield tile
+
+
+@pytest.fixture
+async def tile_2(database_schema, tile):
+    trivia = TriviaOrm(
+        answer="Test answer 2",
+        question="Test question 2?",
+    )
+    await trivia.save()
+
+    _tile = tile.clone()
+    _tile.ordinal += 1
+    _tile.trivia = trivia
+    await _tile.save()
+    yield _tile
+
+
+@pytest.fixture
 async def team(database_schema, game):
     _team = TeamOrm(game=game, name="Test Team")
     await _team.save()
     yield _team
+
+
+@pytest.fixture
+async def team_1(database_schema, game):
+    _team = TeamOrm(game=game, name="Test Team 1")
+    await _team.save()
+    yield _team
+
+
+@pytest.fixture
+async def team_2(database_schema, game):
+    _team = TeamOrm(game=game, name="Test Team 2")
+    await _team.save()
+    yield _team
+
+
+@pytest.fixture
+async def player_1(database_schema, anonymous_user, team_1):
+    player = anonymous_user.clone()
+    player.username = "player_1"
+    await player.save()
+    await team_1.players.add(player)
+    yield player
+
+
+@pytest.fixture
+async def player_2(database_schema, anonymous_user, team_2):
+    player = anonymous_user.clone()
+    player.username = "player_2"
+    await player.save()
+    await team_2.players.add(player)
+    yield player
+
+
+@pytest.fixture
+def no_action(round):
+    return NoAction(round)
+
+
+@pytest.fixture
+async def buzz(database_schema, game, tile, team_1, player_1):
+    _buzz = BuzzOrm(game=game, tile=tile, team=team_1, user=player_1)
+    await _buzz.save()
+    yield _buzz
+
+
+@pytest.fixture
+async def choice(database_schema, game, tile, team_1, player_1):
+    _choice = ChoiceOrm(game=game, tile=tile, team=team_1, user=player_1)
+    await _choice.save()
+    yield _choice
+
+
+@pytest.fixture
+async def choice_1(database_schema, choice):
+    yield choice
+
+
+@pytest.fixture
+async def choice_2(database_schema, choice, tile_2):
+    _choice = choice.clone()
+    _choice.tile = tile_2
+    await _choice.save()
+    yield _choice
+
+
+@pytest.fixture
+async def response(database_schema, game, tile, team_1, player_1):
+    _response = ResponseOrm(game=game, tile=tile, team=team_1, user=player_1)
+    _response.is_correct = False
+    await _response.save()
+    yield _response
+
+
+@pytest.fixture
+async def correct_response(database_schema, response):
+    response.is_correct = True
+    await response.save()
+    yield response
+
+
+@pytest.fixture
+async def incorrect_response_1(database_schema, response):
+    yield response
+
+
+@pytest.fixture
+async def incorrect_response_2(database_schema, response, team_2, player_2):
+    _response = response.clone()
+    _response.team = team_2
+    _response.user = player_2
+    await _response.save()
+    yield _response
+
+
+@pytest.fixture
+async def wager(database_schema, game, tile, team_1, player_1):
+    _wager = WagerOrm(game=game, tile=tile, team=team_1, user=player_1)
+    _wager.amount = 100
+    await _wager.save()
+    yield _wager
+
+
+@pytest.fixture
+async def wager_1(database_schema, wager):
+    yield wager
+
+
+@pytest.fixture
+async def wager_2(database_schema, wager, team_2, player_2):
+    _wager = wager.clone()
+    _wager.team = team_2
+    _wager.user = player_2
+    await _wager.save()
+    yield _wager

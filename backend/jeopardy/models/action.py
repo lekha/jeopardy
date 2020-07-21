@@ -1,5 +1,7 @@
 from enum import Enum
 
+from async_property import async_cached_property
+from async_property import async_property
 from tortoise import fields
 from tortoise.models import ModelMeta
 
@@ -33,11 +35,23 @@ class ActionOrmModelMeta(ModelMeta):
 
 class ActionOrmModel(BaseOrmModel, metaclass=ActionOrmModelMeta):
     """Automatically add default foreign keys to all actions."""
-    pass
+    class Meta:
+        abstract = True
+
+    @async_cached_property
+    async def round(self):
+        return await self.tile.category.board.round
 
 
 class NoAction:
     type_ = None
+
+    def __init__(self, round_):
+        self._round = round_
+
+    @async_property
+    async def round(self):
+        return self._round
 
 
 class ChoiceOrm(ActionOrmModel):
