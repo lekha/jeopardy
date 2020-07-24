@@ -10,6 +10,7 @@ from fastapi import Response
 import jwt
 
 from jeopardy.models.user import GoogleUserMetadataOrm
+from jeopardy.models.user import Nobody
 from jeopardy.models.user import UserOrm
 from jeopardy.schema.user import GoogleUserMetadata
 
@@ -26,11 +27,6 @@ oauth.register(
         "scope": "openid email profile",
     }
 )
-
-
-class Nobody:
-    id = None
-    is_active = False
 
 
 async def login_user(response: Response, user: UserOrm) -> None:

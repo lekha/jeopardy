@@ -37,6 +37,11 @@ class GoogleUserMetadataOrm(BaseOrmModel):
         return f"GoogleUserMetadata({self.id}, {self.email})"
 
 
+class Nobody:
+    id = None
+    is_active = False
+
+
 class UserOrm(BaseOrmModel):
     username = fields.CharField(255)
     is_active = fields.BooleanField(default=1)
