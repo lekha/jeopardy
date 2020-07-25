@@ -1,6 +1,7 @@
 import pytest
 
 from jeopardy.controllers.play import is_active_game
+from jeopardy.controllers.play import is_permitted_to_act
 from jeopardy.controllers.play import is_player
 from jeopardy.controllers.play import next_round_action_type
 from jeopardy.models.action import ActionType
@@ -53,6 +54,165 @@ class TestIsPlayer:
         await team.players.add(inactive_user)
         actual = await is_player(game, inactive_user)
         expected = False
+        assert expected == actual
+
+
+class TestIsPermittedToAct:
+    async def test_permitted_only_if_choice_is_for_available_tile(
+        self, game_with_team_1_next, single_round, player_1, tile, chosen_tile
+    ):
+        game = game_with_team_1_next
+        action = ActionType.CHOICE
+
+        expected = True
+        actual = await is_permitted_to_act(game, player_1, action, tile)
+        assert expected == actual
+
+        expected = False
+        actual = await is_permitted_to_act(game, player_1, action, chosen_tile)
+        assert expected == actual
+
+    async def test_permitted_only_if_choice_made_by_choosing_team(
+        self, game_with_team_1_next, single_round, player_1, player_2, tile
+    ):
+        game = game_with_team_1_next
+        action = ActionType.CHOICE
+
+        expected = True
+        actual = await is_permitted_to_act(game, player_1, action, tile)
+        assert expected == actual
+
+        expected = False
+        actual = await is_permitted_to_act(game, player_2, action, tile)
+        assert expected == actual
+
+    async def test_permitted_only_if_buzz_for_chosen_tile(
+        self, game, single_round, player_1, tile, chosen_tile
+    ):
+        action = ActionType.BUZZ
+
+        expected = False
+        actual = await is_permitted_to_act(game, player_1, action, tile)
+        assert expected == actual
+
+        expected = True
+        actual = await is_permitted_to_act(game, player_1, action, chosen_tile)
+        assert expected == actual
+
+    async def test_permitted_only_if_buzz_made_by_team_not_already_buzzed(
+        self,
+        game,
+        single_round,
+        player_1,
+        player_2,
+        tile,
+        buzz_1_when_chosen_by_2,
+    ):
+        action = ActionType.BUZZ
+
+        expected = False
+        actual = await is_permitted_to_act(game, player_1, action, tile)
+        assert expected == actual
+
+        expected = True
+        actual = await is_permitted_to_act(game, player_2, action, tile)
+        assert expected == actual
+
+    async def test_permitted_only_if_response_made_by_team_that_buzzed(
+        self,
+        game,
+        single_round,
+        player_1,
+        player_2,
+        normal_tile,
+        buzz_1_when_chosen_by_2,
+    ):
+        action = ActionType.RESPONSE
+        tile = normal_tile
+
+        expected = True
+        actual = await is_permitted_to_act(game, player_1, action, tile)
+        assert expected == actual
+
+        expected = False
+        actual = await is_permitted_to_act(game, player_2, action, tile)
+        assert expected == actual
+
+    async def test_permitted_only_if_response_made_by_team_that_wagered(
+        self,
+        game,
+        single_round,
+        player_1,
+        player_2,
+        daily_double_tile,
+        wager_1,
+    ):
+        action = ActionType.RESPONSE
+        tile = daily_double_tile
+
+        expected = True
+        actual = await is_permitted_to_act(game, player_1, action, tile)
+        assert expected == actual
+
+        expected = False
+        actual = await is_permitted_to_act(game, player_2, action, tile)
+        assert expected == actual
+
+    async def test_permitted_only_if_wager_made_by_choosing_team(
+        self,
+        game,
+        single_round,
+        player_1,
+        player_2,
+        tile,
+        choice_1,
+    ):
+        action = ActionType.WAGER
+
+        expected = True
+        actual = await is_permitted_to_act(game, player_1, action, tile)
+        assert expected == actual
+
+        expected = False
+        actual = await is_permitted_to_act(game, player_2, action, tile)
+        assert expected == actual
+
+    async def test_permitted_only_if_final_round_wager_not_already_made(
+        self,
+        game,
+        final_round,
+        player_1,
+        player_2,
+        tile,
+        wager_1,
+    ):
+        action = ActionType.WAGER
+
+        expected = False
+        actual = await is_permitted_to_act(game, player_1, action, tile)
+        assert expected == actual
+
+        expected = True
+        actual = await is_permitted_to_act(game, player_2, action, tile)
+        assert expected == actual
+
+    async def test_permitted_only_if_final_round_response_not_already_made(
+        self,
+        game,
+        final_round,
+        player_1,
+        player_2,
+        tile,
+        incorrect_response_1,
+    ):
+        action = ActionType.RESPONSE
+
+        expected = False
+        actual = await is_permitted_to_act(game, player_1, action, tile)
+        assert expected == actual
+
+        expected = True
+        actual = await is_permitted_to_act(game, player_2, action, tile)
         assert expected == actual
 
 

@@ -211,6 +211,14 @@ async def tile_2(database_schema, tile):
 
 
 @pytest.fixture
+async def chosen_tile(database_schema, game, team_2, player_2, tile_2):
+    await ChoiceOrm.create(
+        game=game, tile=tile_2, team=team_2, user=player_2
+    )
+    yield tile_2
+
+
+@pytest.fixture
 async def team(database_schema, game):
     _team = TeamOrm(game=game, name="Test Team")
     await _team.save()
@@ -259,6 +267,11 @@ async def buzz(database_schema, game, tile, team_1, player_1):
     _buzz = BuzzOrm(game=game, tile=tile, team=team_1, user=player_1)
     await _buzz.save()
     yield _buzz
+
+
+@pytest.fixture
+async def buzz_1_when_chosen_by_2(database_schema, choice_2, buzz):
+    yield buzz
 
 
 @pytest.fixture
@@ -330,3 +343,10 @@ async def wager_2(database_schema, wager, team_2, player_2):
     _wager.user = player_2
     await _wager.save()
     yield _wager
+
+
+@pytest.fixture
+async def game_with_team_1_next(database_schema, game, team_1):
+    game.next_chooser = team_1
+    await game.save()
+    yield game
