@@ -81,14 +81,7 @@ async def _has_team_acted(
         ActionType.WAGER:    WagerOrm,
     }
     action = type_to_action[action_type]
-
-    num_times_acted = (
-        await action
-        .filter(team=team)
-        .filter(tile=tile)
-        .count()
-    )
-    return num_times_acted > 0
+    return await action.exists(team=team, tile=tile)
 
 
 async def next_round_action_type(prev_action: ActionOrmModel) -> ActionType:
