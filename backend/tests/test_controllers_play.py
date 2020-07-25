@@ -1,8 +1,11 @@
+from unittest.mock import patch
+
 import pytest
 
 from jeopardy.controllers.play import is_active_game
 from jeopardy.controllers.play import is_permitted_to_act
 from jeopardy.controllers.play import is_player
+from jeopardy.controllers.play import is_valid_action
 from jeopardy.controllers.play import next_round_action_type
 from jeopardy.models.action import ActionType
 from jeopardy.models.game import GameOrm
@@ -334,3 +337,99 @@ class TestNextRoundActionType:
         actual = await next_round_action_type(prev_action)
         expected = None
         assert expected == actual
+
+
+class TestIsValidAction:
+    async def test_valid_only_when_all_inputs_are_non_null(
+        self, game_started_with_team_1, round, team_1, player_1, tile
+    ):
+        action = ActionType.CHOICE
+        game = game_started_with_team_1
+        round_ = round
+        user = player_1
+
+        expected = False
+        actual = await is_valid_action(None, round_, user, action, tile)
+        assert expected == actual
+
+        expected = False
+        actual = await is_valid_action(game, None, user, action, tile)
+        assert expected == actual
+
+        expected = False
+        actual = await is_valid_action(game, round_, None, action, tile)
+        assert expected == actual
+
+        expected = False
+        actual = await is_valid_action(game, round_, user, None, tile)
+        assert expected == actual
+
+        expected = False
+        actual = await is_valid_action(game, round_, user, action, None)
+        assert expected == actual
+
+        expected = True
+        actual = await is_valid_action(game, round_, user, action, tile)
+        assert expected == actual
+
+    @patch("jeopardy.controllers.play.is_active_game")
+    async def test_valid_only_when_game_active(
+        self, mock_is_active_game, game, round, team_1, player_1, tile
+    ):
+        await is_valid_action(game, round, player_1, ActionType.CHOICE, tile)
+        mock_is_active_game.assert_called_with(game)
+
+    async def test_valid_only_when_round_is_the_current_round(
+        self, game_started_with_team_1, round_1, round_2, team_1, player_1, tile
+    ):
+        action = ActionType.CHOICE
+        game = game_started_with_team_1
+        user = player_1
+
+        expected = True
+        actual = await is_valid_action(game, round_1, user, action, tile)
+        assert expected == actual
+
+        expected = False
+        actual = await is_valid_action(game, round_2, user, action, tile)
+        assert expected == actual
+
+    @patch("jeopardy.controllers.play.is_player")
+    async def test_valid_only_when_user_is_a_player_in_the_game(
+        self, mock_is_player, game, round, team_1, player_1, tile
+    ):
+        await is_valid_action(game, round, player_1, ActionType.CHOICE, tile)
+        mock_is_player.assert_called_with(game, player_1)
+
+    async def test_valid_only_when_action_is_the_next_allowed_type(
+        self, game_started_with_team_1, round, team_1, player_1, tile
+    ):
+        game = game_started_with_team_1
+
+        action = ActionType.CHOICE
+        expected = True
+        actual = await is_valid_action(game, round, player_1, action, tile)
+        assert expected == actual
+
+        action = ActionType.BUZZ
+        expected = False
+        actual = await is_valid_action(game, round, player_1, action, tile)
+        assert expected == actual
+
+    @patch("jeopardy.controllers.play.is_permitted_to_act")
+    async def test_valid_only_when_user_is_permitted_to_perform_the_action(
+        self,
+        mock_is_permitted_to_act,
+        game_started_with_team_1,
+        round,
+        team_1,
+        player_1,
+        tile,
+    ):
+        action = ActionType.CHOICE
+        game = game_started_with_team_1
+
+        await is_valid_action(game, round, player_1, action, tile)
+        mock_is_permitted_to_act.assert_called_with(
+            game, player_1, action, tile
+        )

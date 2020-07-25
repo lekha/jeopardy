@@ -12,6 +12,7 @@ from yoyo.backends import MySQLBackend
 from yoyo.connections import parse_uri
 from yoyo.migrations import default_migration_table
 
+from jeopardy.models.action import ActionType
 from jeopardy.models.action import BuzzOrm
 from jeopardy.models.action import ChoiceOrm
 from jeopardy.models.action import NoAction
@@ -144,6 +145,20 @@ async def final_round(database, round):
     round.ordinal = 3
     await round.save()
     yield round
+
+
+@pytest.fixture
+async def round_1(database, round):
+    yield round
+
+
+@pytest.fixture
+async def round_2(database, round):
+    _round = round.clone()
+    _round.class_ = RoundClass.DOUBLE
+    _round.ordinal = 2
+    await _round.save()
+    yield _round
 
 
 @pytest.fixture
@@ -347,5 +362,14 @@ async def wager_2(database, wager, team_2, player_2):
 @pytest.fixture
 async def game_with_team_1_next(database, game, team_1):
     game.next_chooser = team_1
+    await game.save()
+    yield game
+
+@pytest.fixture
+async def game_started_with_team_1(database, game, team_1, round):
+    game.next_action_type = ActionType.CHOICE
+    game.next_chooser = team_1
+    game.next_message_id = 0
+    game.next_round = round
     await game.save()
     yield game

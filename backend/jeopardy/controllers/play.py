@@ -8,6 +8,7 @@ from jeopardy.models.action import ResponseOrm
 from jeopardy.models.action import WagerOrm
 from jeopardy.models.game import GameOrm
 from jeopardy.models.game import RoundClass
+from jeopardy.models.game import RoundOrm
 from jeopardy.models.game import TileOrm
 from jeopardy.models.team import TeamOrm
 from jeopardy.models.user import UserOrm
@@ -176,3 +177,25 @@ async def _collect_wagers(prev_action: ActionOrmModel) -> ActionType:
     else:
         next_action_type = ActionType.RESPONSE
     return next_action_type
+
+
+async def is_valid_action(
+    game: GameOrm,
+    round_: RoundOrm,
+    user: UserOrm,
+    action_type: ActionType,
+    tile: TileOrm,
+) -> bool:
+    """Validate a player's incoming request to perform an action on a tile."""
+    return (
+        game is not None
+        and round_ is not None
+        and user is not None
+        and action_type is not None
+        and tile is not None
+        and await is_active_game(game)
+        and await is_player(game, user)
+        and round_ == await game.next_round
+        and action_type == game.next_action_type
+        and await is_permitted_to_act(game, user, action_type, tile)
+    )
