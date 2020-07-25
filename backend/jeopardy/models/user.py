@@ -3,6 +3,8 @@ from enum import Enum
 from tortoise import fields
 
 from jeopardy.models.base import BaseOrmModel
+from jeopardy.models.game import GameOrm
+from jeopardy.models.team import TeamOrm
 
 
 class AuthProvider(Enum):
@@ -67,3 +69,13 @@ class UserOrm(BaseOrmModel):
 
     def __str__(self):
         return f"User({self.id}, {self.username})"
+
+    async def team(self, game: GameOrm) -> TeamOrm:
+        """Find the team a user is on for the game if they are on one."""
+        team = (
+            await TeamOrm
+            .filter(game=game)
+            .filter(players__id=self.id)
+            .first()
+        )
+        return team

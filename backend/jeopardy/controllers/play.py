@@ -23,13 +23,8 @@ async def is_player(game: GameOrm, user: UserOrm) -> bool:
     if not user.is_active:
         return False
 
-    await game.fetch_related("teams__players")
-    for team in game.teams:
-        for player in team.players:
-            if player.id == user.id:
-                return True
-
-    return False
+    team = await user.team(game)
+    return team is not None
 
 
 async def next_round_action_type(prev_action: ActionOrmModel) -> ActionType:
