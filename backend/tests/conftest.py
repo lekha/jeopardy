@@ -1,3 +1,5 @@
+import random
+import string
 from os import getenv
 
 import asyncio
@@ -56,19 +58,14 @@ def event_loop(request):
 @pytest.fixture(scope="session")
 async def database():
     database_uri = getenv("DATABASE_URI")
+    migrations_dir = getenv("MIGRATIONS_DIR")
+
     await Tortoise.init(
         db_url=database_uri,
         modules={"models": ["jeopardy.models"]},
     )
-
-
-@pytest.fixture
-def database_schema(database):
-    migrations_dir = getenv("MIGRATIONS_DIR")
-    migrations = read_migrations(migrations_dir)
-
-    database_uri = getenv("DATABASE_URI")
     backend = _get_backend(database_uri)
+    migrations = read_migrations(migrations_dir)
 
     with backend.lock():
         backend.apply_migrations(backend.to_apply(migrations))
@@ -80,7 +77,7 @@ def database_schema(database):
 
 
 @pytest.fixture
-async def google_user(database_schema):
+async def google_user(database):
     user = UserOrm(
         username="test_google_user",
         is_active=True,
@@ -91,7 +88,7 @@ async def google_user(database_schema):
 
 
 @pytest.fixture
-async def inactive_user(database_schema):
+async def inactive_user(database):
     user = UserOrm(
         username="test_inactive_user",
         is_active=False,
@@ -102,7 +99,7 @@ async def inactive_user(database_schema):
 
 
 @pytest.fixture
-async def anonymous_user(database_schema):
+async def anonymous_user(database):
     user = UserOrm(
         username="test_anonymous_user",
         is_active=True,
@@ -113,10 +110,12 @@ async def anonymous_user(database_schema):
 
 
 @pytest.fixture
-async def game(database_schema, google_user):
+async def game(database, google_user):
+    # Generate random code so that tests are scoped to their own game
+    code = "".join(random.choice(string.ascii_uppercase) for _ in range(4))
     _game = GameOrm(
         name="Test Game",
-        code="TEST",
+        code=code,
         owner=google_user,
         max_teams=3,
         max_players_per_team=3,
@@ -128,19 +127,19 @@ async def game(database_schema, google_user):
 
 
 @pytest.fixture
-async def round(database_schema, game):
+async def round(database, game):
     _round = RoundOrm(game=game, class_=RoundClass.SINGLE, ordinal=1)
     await _round.save()
     yield _round
 
 
 @pytest.fixture
-async def single_round(database_schema, round):
+async def single_round(database, round):
     yield round
 
 
 @pytest.fixture
-async def final_round(database_schema, round):
+async def final_round(database, round):
     round.class_ = RoundClass.FINAL
     round.ordinal = 3
     await round.save()
@@ -179,24 +178,24 @@ async def tile(database, round):
 
 
 @pytest.fixture
-async def normal_tile(database_schema, tile):
+async def normal_tile(database, tile):
     yield tile
 
 
 @pytest.fixture
-async def daily_double_tile(database_schema, tile):
+async def daily_double_tile(database, tile):
     tile.is_daily_double = True
     await tile.save()
     yield tile
 
 
 @pytest.fixture
-async def tile_1(database_schema, tile):
+async def tile_1(database, tile):
     yield tile
 
 
 @pytest.fixture
-async def tile_2(database_schema, tile):
+async def tile_2(database, tile):
     trivia = TriviaOrm(
         answer="Test answer 2",
         question="Test question 2?",
@@ -211,7 +210,7 @@ async def tile_2(database_schema, tile):
 
 
 @pytest.fixture
-async def chosen_tile(database_schema, game, team_2, player_2, tile_2):
+async def chosen_tile(database, game, team_2, player_2, tile_2):
     await ChoiceOrm.create(
         game=game, tile=tile_2, team=team_2, user=player_2
     )
@@ -219,28 +218,28 @@ async def chosen_tile(database_schema, game, team_2, player_2, tile_2):
 
 
 @pytest.fixture
-async def team(database_schema, game):
+async def team(database, game):
     _team = TeamOrm(game=game, name="Test Team")
     await _team.save()
     yield _team
 
 
 @pytest.fixture
-async def team_1(database_schema, game):
+async def team_1(database, game):
     _team = TeamOrm(game=game, name="Test Team 1")
     await _team.save()
     yield _team
 
 
 @pytest.fixture
-async def team_2(database_schema, game):
+async def team_2(database, game):
     _team = TeamOrm(game=game, name="Test Team 2")
     await _team.save()
     yield _team
 
 
 @pytest.fixture
-async def player_1(database_schema, anonymous_user, team_1):
+async def player_1(database, anonymous_user, team_1):
     player = anonymous_user.clone()
     player.username = "player_1"
     await player.save()
@@ -249,7 +248,7 @@ async def player_1(database_schema, anonymous_user, team_1):
 
 
 @pytest.fixture
-async def player_2(database_schema, anonymous_user, team_2):
+async def player_2(database, anonymous_user, team_2):
     player = anonymous_user.clone()
     player.username = "player_2"
     await player.save()
@@ -263,31 +262,31 @@ def no_action(round):
 
 
 @pytest.fixture
-async def buzz(database_schema, game, tile, team_1, player_1):
+async def buzz(database, game, tile, team_1, player_1):
     _buzz = BuzzOrm(game=game, tile=tile, team=team_1, user=player_1)
     await _buzz.save()
     yield _buzz
 
 
 @pytest.fixture
-async def buzz_1_when_chosen_by_2(database_schema, choice_2, buzz):
+async def buzz_1_when_chosen_by_2(database, choice_2, buzz):
     yield buzz
 
 
 @pytest.fixture
-async def choice(database_schema, game, tile, team_1, player_1):
+async def choice(database, game, tile, team_1, player_1):
     _choice = ChoiceOrm(game=game, tile=tile, team=team_1, user=player_1)
     await _choice.save()
     yield _choice
 
 
 @pytest.fixture
-async def choice_1(database_schema, choice):
+async def choice_1(database, choice):
     yield choice
 
 
 @pytest.fixture
-async def choice_2(database_schema, choice, tile_2):
+async def choice_2(database, choice, tile_2):
     _choice = choice.clone()
     _choice.tile = tile_2
     await _choice.save()
@@ -295,7 +294,7 @@ async def choice_2(database_schema, choice, tile_2):
 
 
 @pytest.fixture
-async def response(database_schema, game, tile, team_1, player_1):
+async def response(database, game, tile, team_1, player_1):
     _response = ResponseOrm(game=game, tile=tile, team=team_1, user=player_1)
     _response.is_correct = False
     await _response.save()
@@ -303,19 +302,19 @@ async def response(database_schema, game, tile, team_1, player_1):
 
 
 @pytest.fixture
-async def correct_response(database_schema, response):
+async def correct_response(database, response):
     response.is_correct = True
     await response.save()
     yield response
 
 
 @pytest.fixture
-async def incorrect_response_1(database_schema, response):
+async def incorrect_response_1(database, response):
     yield response
 
 
 @pytest.fixture
-async def incorrect_response_2(database_schema, response, team_2, player_2):
+async def incorrect_response_2(database, response, team_2, player_2):
     _response = response.clone()
     _response.team = team_2
     _response.user = player_2
@@ -324,7 +323,7 @@ async def incorrect_response_2(database_schema, response, team_2, player_2):
 
 
 @pytest.fixture
-async def wager(database_schema, game, tile, team_1, player_1):
+async def wager(database, game, tile, team_1, player_1):
     _wager = WagerOrm(game=game, tile=tile, team=team_1, user=player_1)
     _wager.amount = 100
     await _wager.save()
@@ -332,12 +331,12 @@ async def wager(database_schema, game, tile, team_1, player_1):
 
 
 @pytest.fixture
-async def wager_1(database_schema, wager):
+async def wager_1(database, wager):
     yield wager
 
 
 @pytest.fixture
-async def wager_2(database_schema, wager, team_2, player_2):
+async def wager_2(database, wager, team_2, player_2):
     _wager = wager.clone()
     _wager.team = team_2
     _wager.user = player_2
@@ -346,7 +345,7 @@ async def wager_2(database_schema, wager, team_2, player_2):
 
 
 @pytest.fixture
-async def game_with_team_1_next(database_schema, game, team_1):
+async def game_with_team_1_next(database, game, team_1):
     game.next_chooser = team_1
     await game.save()
     yield game
