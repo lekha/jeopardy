@@ -41,6 +41,9 @@ class Nobody:
     id = None
     is_active = False
 
+    def __str__(self):
+        return "Nobody()"
+
 
 class UserOrm(BaseOrmModel):
     username = fields.CharField(255)
