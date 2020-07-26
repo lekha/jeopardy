@@ -2,6 +2,8 @@ from fastapi import HTTPException
 from fastapi import status
 from fastapi.security import SecurityScopes
 
+from jeopardy.models.action import ActionType
+
 
 def _auth_header(required: SecurityScopes, error_code: str = None) -> str:
     if required is not None:
@@ -47,3 +49,47 @@ class MissingTokenException(UnauthorizedException):
     def __init__(self, required: SecurityScopes) -> None:
         detail = "No credentials provided"
         super().__init__(required, None, detail)
+
+
+class ForbiddenAccessException(Exception):
+    """Exception when user attempts to access a game without permission."""
+    pass
+
+
+class InvalidRequestException(Exception):
+    """Exception for invalid incoming requests from users."""
+    pass
+
+
+class ActOutOfTurnException(InvalidRequestException):
+    """Exception when user requests to perform action when not her turn."""
+    pass
+
+
+class ForbiddenActionException(InvalidRequestException):
+    """Exception when user requests to perform inappropriate action."""
+    def __init__(self, expected_action: ActionType) -> None:
+        message = f"Forbidden action. Expected action type: {expected_action}"
+        super().__init__(message)
+
+
+class ForbiddenWagerException(InvalidRequestException):
+    """Exception when player wagers a forbidden amount."""
+    pass
+
+
+class MissingFieldException(InvalidRequestException):
+    """Exception when request is missing required fields."""
+    def __init__(self, expected_schema: dict) -> None:
+        message = f"Field missing. Expected request schema: {expected_schema}"
+        super().__init__(message)
+
+
+class TileAlreadyChosenException(InvalidRequestException):
+    """Exception when player chooses a tile that has already been chosen."""
+    pass
+
+
+class TileNotFoundException(InvalidRequestException):
+    """Exception when player chooses a tile that isn't part of the game."""
+    pass

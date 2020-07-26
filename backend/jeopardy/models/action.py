@@ -14,6 +14,10 @@ class ActionType(Enum):
     RESPONSE = "response"
     WAGER    = "wager"
 
+    @classmethod
+    def from_value(cls, value):
+        return cls(value) if value in cls._value2member_map_ else None
+
 
 class ActionOrmModelMeta(ModelMeta):
     def __new__(cls, name, bases, attrs):

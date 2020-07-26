@@ -1,5 +1,6 @@
 from enum import Enum
 
+from async_property import async_property
 from tortoise import fields
 
 from jeopardy.models.action import ActionType
@@ -118,7 +119,12 @@ class TileOrm(BaseOrmModel):
         unique_together = (("category", "trivia"), ("category", "ordinal"))
 
     def __str__(self):
-        return f"Tile({self.id}, {self.category}, {self.points})"
+        return f"Tile({self.id}, {self.category}, {self.ordinal})"
+
+    @async_property
+    async def round_(self):
+        await self.fetch_related("category__board__round_")
+        return self.category.board.round_
 
 
 class TriviaOrm(BaseOrmModel):

@@ -2,12 +2,18 @@ from unittest.mock import patch
 
 import pytest
 
+from jeopardy import exceptions
+from jeopardy.models.action import ActionType
+from jeopardy.models.game import GameOrm
+from jeopardy.schema.action import Action
+from jeopardy.schema.action import Request
+from jeopardy.schema.action import Wager
 from jeopardy.validation import is_active_game
 from jeopardy.validation import is_permitted_to_act
 from jeopardy.validation import is_player
-from jeopardy.validation import is_valid_action
-from jeopardy.models.action import ActionType
-from jeopardy.models.game import GameOrm
+from jeopardy.validation import validate_game
+from jeopardy.validation import validate_request
+from jeopardy.validation import validate_user
 
 
 pytestmark = pytest.mark.asyncio
@@ -217,96 +223,146 @@ class TestIsPermittedToAct:
         assert expected == actual
 
 
-class TestIsValidAction:
-    async def test_valid_only_when_all_inputs_are_non_null(
-        self, game_started_with_team_1, round_, team_1, player_1, tile
-    ):
-        action = ActionType.CHOICE
-        game = game_started_with_team_1
-        user = player_1
+class TestValidateGame:
+    async def test_errors_if_game_does_not_exist(self):
+        game = None
+        with pytest.raises(exceptions.ForbiddenAccessException):
+            await validate_game(game)
 
-        expected = False
-        actual = await is_valid_action(None, round_, user, action, tile)
-        assert expected == actual
-
-        expected = False
-        actual = await is_valid_action(game, None, user, action, tile)
-        assert expected == actual
-
-        expected = False
-        actual = await is_valid_action(game, round_, None, action, tile)
-        assert expected == actual
-
-        expected = False
-        actual = await is_valid_action(game, round_, user, None, tile)
-        assert expected == actual
-
-        expected = False
-        actual = await is_valid_action(game, round_, user, action, None)
-        assert expected == actual
-
-        expected = True
-        actual = await is_valid_action(game, round_, user, action, tile)
-        assert expected == actual
+    async def test_errors_if_game_is_not_active(self):
+        game = GameOrm(is_started=True, is_finished=True)
+        with pytest.raises(exceptions.ForbiddenAccessException):
+            await validate_game(game)
 
     @patch("jeopardy.validation.is_active_game")
-    async def test_valid_only_when_game_active(
-        self, mock_is_active_game, game, round_, team_1, player_1, tile
-    ):
-        await is_valid_action(game, round_, player_1, ActionType.CHOICE, tile)
+    async def test_checks_if_game_is_active(self, mock_is_active_game):
+        game = GameOrm(is_started=True, is_finished=True)
+        await validate_game(game)
         mock_is_active_game.assert_called_with(game)
 
-    async def test_valid_only_when_round_is_the_current_round(
-        self, game_started_with_team_1, round_1, round_2, team_1, player_1, tile
+
+class TestValidateRequest:
+    async def test_does_not_error_for_logically_consistent_input(
+        self, game_started_with_team_1, player_1, tile
     ):
-        action = ActionType.CHOICE
         game = game_started_with_team_1
         user = player_1
+        consistent_request = Request(
+            message_id=game.next_message_id,
+            action=Action(type="choice", tile_id=tile.id),
+        )
 
-        expected = True
-        actual = await is_valid_action(game, round_1, user, action, tile)
-        assert expected == actual
+        await validate_request(game, user, consistent_request)
 
-        expected = False
-        actual = await is_valid_action(game, round_2, user, action, tile)
-        assert expected == actual
+    async def test_errors_when_message_id_not_next(
+        self, game_started_with_team_1, player_1, tile
+    ):
+        game = game_started_with_team_1
+        user = player_1
+        inconsistent_request = Request(
+            message_id=game.next_message_id - 1,
+            action=Action(type="choice", tile_id=tile.id),
+        )
+
+        with pytest.raises(exceptions.InvalidRequestException):
+            await validate_request(game, user, inconsistent_request)
+
+    async def test_errors_when_action_type_not_next(
+        self, game_started_with_team_1, player_1, tile
+    ):
+        game = game_started_with_team_1
+        user = player_1
+        forbidden_request = Request(
+            message_id=game.next_message_id,
+            action=Action(type="buzz", tile_id=tile.id),
+        )
+
+        with pytest.raises(exceptions.ForbiddenActionException):
+            await validate_request(game, user, forbidden_request)
+
+    async def test_errors_when_tile_not_found(
+        self, game_started_with_team_1, player_1, tile
+    ):
+        game = game_started_with_team_1
+        user = player_1
+        inconsistent_request = Request(
+            message_id=game.next_message_id,
+            action=Action(type="choice", tile_id=tile.id + 1),
+        )
+
+        with pytest.raises(exceptions.TileNotFoundException):
+            await validate_request(game, user, inconsistent_request)
+
+    async def test_errors_when_tile_not_part_of_game(
+        self, game_started_with_team_1, player_1, round_2_tile
+    ):
+        game = game_started_with_team_1
+        user = player_1
+        inconsistent_request = Request(
+            message_id=game.next_message_id,
+            action=Action(type="choice", tile_id=round_2_tile.id),
+        )
+
+        with pytest.raises(exceptions.TileNotFoundException):
+            await validate_request(game, user, inconsistent_request)
+
+    async def test_errors_when_tile_already_chosen(
+        self, game_started_with_team_1, player_1, chosen_tile
+    ):
+        game = game_started_with_team_1
+        user = player_1
+        forbidden_request = Request(
+            message_id=game.next_message_id,
+            action=Action(type="choice", tile_id=chosen_tile.id),
+        )
+
+        with pytest.raises(exceptions.TileAlreadyChosenException):
+            await validate_request(game, user, forbidden_request)
+
+    '''
+    @pytest.mark.parametrize("amount", [14, 69, 88, 666, 1488])
+    async def test_errors_when_wager_amount_is_explicitly_prohibited(
+        self, game_after_daily_double_chosen, player_1, tile, amount
+    ):
+        game = game_after_daily_double_chosen
+        user = player_1
+        forbidden_request = Request(
+            message_id=game.next_message_id,
+            action=Wager(type="wager", tile_id=tile.id, amount=amount),
+        )
+
+        with pytest.raises(ForbiddenWagerException):
+            await validate_request(game, user, forbidden_request)
+
+    @patch("jeopardy.validation.is_valid_wager")
+    async def test_errors_when_wager_amount_is_above_team_score(
+        self, mock_is_valid_wager, game_after_daily_double_chosen, player_1, tile
+    ):
+        assert False
+    '''
+
+    async def test_errors_if_user_not_permitted_to_perform_the_action(
+        self, game_started_with_team_1, player_2, tile
+    ):
+        game = game_started_with_team_1
+        wrong_user = player_2
+        consistent_request = Request(
+            message_id=game.next_message_id,
+            action=Action(type="choice", tile_id=tile.id),
+        )
+
+        with pytest.raises(exceptions.ActOutOfTurnException):
+            await validate_request(game, wrong_user, consistent_request)
+
+
+class TestValidateUser:
+    async def test_errors_if_user_not_player(self, game, anonymous_user):
+        with pytest.raises(exceptions.ForbiddenAccessException):
+            await validate_user(game, anonymous_user)
 
     @patch("jeopardy.validation.is_player")
-    async def test_valid_only_when_user_is_a_player_in_the_game(
-        self, mock_is_player, game, round_, team_1, player_1, tile
+    async def test_checks_if_user_is_player(
+        self, mock_is_player, game, player_1
     ):
-        await is_valid_action(game, round_, player_1, ActionType.CHOICE, tile)
+        await validate_user(game, player_1)
         mock_is_player.assert_called_with(game, player_1)
-
-    async def test_valid_only_when_action_is_the_next_allowed_type(
-        self, game_started_with_team_1, round_, team_1, player_1, tile
-    ):
-        game = game_started_with_team_1
-
-        action = ActionType.CHOICE
-        expected = True
-        actual = await is_valid_action(game, round_, player_1, action, tile)
-        assert expected == actual
-
-        action = ActionType.BUZZ
-        expected = False
-        actual = await is_valid_action(game, round_, player_1, action, tile)
-        assert expected == actual
-
-    @patch("jeopardy.validation.is_permitted_to_act")
-    async def test_valid_only_when_user_is_permitted_to_perform_the_action(
-        self,
-        mock_is_permitted_to_act,
-        game_started_with_team_1,
-        round_,
-        team_1,
-        player_1,
-        tile,
-    ):
-        action = ActionType.CHOICE
-        game = game_started_with_team_1
-
-        await is_valid_action(game, round_, player_1, action, tile)
-        mock_is_permitted_to_act.assert_called_with(
-            game, player_1, action, tile
-        )

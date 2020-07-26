@@ -27,6 +27,10 @@ from jeopardy.models.game import TileOrm
 from jeopardy.models.game import TriviaOrm
 from jeopardy.models.team import TeamOrm
 from jeopardy.models.user import UserOrm
+from jeopardy.schema.action import Action
+from jeopardy.schema.action import Request
+from jeopardy.schema.action import Response
+from jeopardy.schema.action import Wager
 
 
 def _get_backend(uri, migration_table=default_migration_table):
@@ -233,6 +237,37 @@ async def chosen_tile(database, game, team_2, player_2, tile_2):
 
 
 @pytest.fixture
+async def round_2_tile(database, round_2):
+    board = BoardOrm(
+        round_=round_2,
+        num_categories=2,
+        num_tiles_per_category=2,
+    )
+    await board.save()
+
+    category = CategoryOrm(
+        board=board,
+        name="Test Category",
+        ordinal=0,
+    )
+    await category.save()
+
+    trivia = TriviaOrm(
+        answer="Test answer",
+        question="Test question?",
+    )
+    await trivia.save()
+
+    _tile = TileOrm(
+        category=category,
+        trivia=trivia,
+        ordinal=0,
+    )
+    await _tile.save()
+    yield _tile
+
+
+@pytest.fixture
 async def team(database, game):
     _team = TeamOrm(game=game, name="Test Team")
     await _team.save()
@@ -373,3 +408,66 @@ async def game_started_with_team_1(database, game, team_1, round_):
     game.next_round = round_
     await game.save()
     yield game
+
+
+@pytest.fixture
+async def game_after_daily_double_chosen(
+    database, game, team_1, player_1, round_, tile
+):
+    game.next_action_type = ActionType.WAGER
+    game.next_chooser = team_1
+    game.next_message_id = 20
+    game.next_round = round_
+    await game.save()
+
+    await ChoiceOrm.create(
+        game=game, tile=tile, team=team_1, user=player_1
+    )
+
+    yield game
+
+
+@pytest.fixture
+async def incoming_request_buzz():
+    return {
+        "message_id": 1,
+        "action": {
+            "type": "buzz",
+            "tile_id": 2,
+        },
+    }
+
+
+@pytest.fixture
+async def incoming_request_choice():
+    return {
+        "message_id": 3,
+        "action": {
+            "type": "choice",
+            "tile_id": 4,
+        },
+    }
+
+
+@pytest.fixture
+async def incoming_request_response():
+    return {
+        "message_id": 5,
+        "action": {
+            "type": "response",
+            "tile_id": 6,
+            "question": "What is a test question?",
+        },
+    }
+
+
+@pytest.fixture
+async def incoming_request_wager():
+    return {
+        "message_id": 7,
+        "action": {
+            "type": "wager",
+            "tile_id": 8,
+            "amount": 100,
+        },
+    }
