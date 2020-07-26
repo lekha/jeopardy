@@ -75,14 +75,18 @@ async def _has_team_acted(
     team: TeamOrm, action_type: ActionType, tile: TileOrm
 ) -> bool:
     """Determine if team has performed the action on the tile."""
+    action = _orm_from_type(action_type)
+    return await action.exists(team=team, tile=tile)
+
+
+def _orm_from_type(action_type: ActionType) -> ActionOrmModel:
     type_to_action = {
         ActionType.CHOICE:   ChoiceOrm,
         ActionType.BUZZ:     BuzzOrm,
         ActionType.RESPONSE: ResponseOrm,
         ActionType.WAGER:    WagerOrm,
     }
-    action = type_to_action[action_type]
-    return await action.exists(team=team, tile=tile)
+    return type_to_action[action_type]
 
 
 async def next_round_action_type(prev_action: ActionOrmModel) -> ActionType:
