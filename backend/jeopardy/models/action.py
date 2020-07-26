@@ -39,8 +39,8 @@ class ActionOrmModel(BaseOrmModel, metaclass=ActionOrmModelMeta):
         abstract = True
 
     @async_cached_property
-    async def round(self):
-        return await self.tile.category.board.round
+    async def round_(self):
+        return await self.tile.category.board.round_
 
 
 class NoAction:
@@ -50,7 +50,7 @@ class NoAction:
         self._round = round_
 
     @async_property
-    async def round(self):
+    async def round_(self):
         return self._round
 
 

@@ -128,33 +128,33 @@ async def game(database, google_user):
 
 
 @pytest.fixture
-async def round(database, game):
+async def round_(database, game):
     _round = RoundOrm(game=game, class_=RoundClass.SINGLE, ordinal=1)
     await _round.save()
     yield _round
 
 
 @pytest.fixture
-async def single_round(database, round):
-    yield round
+async def single_round(database, round_):
+    yield round_
 
 
 @pytest.fixture
-async def final_round(database, round):
-    round.class_ = RoundClass.FINAL
-    round.ordinal = 3
-    await round.save()
-    yield round
+async def final_round(database, round_):
+    round_.class_ = RoundClass.FINAL
+    round_.ordinal = 3
+    await round_.save()
+    yield round_
 
 
 @pytest.fixture
-async def round_1(database, round):
-    yield round
+async def round_1(database, round_):
+    yield round_
 
 
 @pytest.fixture
-async def round_2(database, round):
-    _round = round.clone()
+async def round_2(database, round_):
+    _round = round_.clone()
     _round.class_ = RoundClass.DOUBLE
     _round.ordinal = 2
     await _round.save()
@@ -162,9 +162,9 @@ async def round_2(database, round):
 
 
 @pytest.fixture
-async def tile(database, round):
+async def tile(database, round_):
     board = BoardOrm(
-        round=round,
+        round_=round_,
         num_categories=2,
         num_tiles_per_category=2,
     )
@@ -272,8 +272,8 @@ async def player_2(database, anonymous_user, team_2):
 
 
 @pytest.fixture
-def no_action(round):
-    return NoAction(round)
+def no_action(round_):
+    return NoAction(round_)
 
 
 @pytest.fixture
@@ -366,10 +366,10 @@ async def game_with_team_1_next(database, game, team_1):
     yield game
 
 @pytest.fixture
-async def game_started_with_team_1(database, game, team_1, round):
+async def game_started_with_team_1(database, game, team_1, round_):
     game.next_action_type = ActionType.CHOICE
     game.next_chooser = team_1
     game.next_message_id = 0
-    game.next_round = round
+    game.next_round = round_
     await game.save()
     yield game

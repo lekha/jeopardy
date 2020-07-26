@@ -41,7 +41,7 @@ async def is_permitted_to_act(
     game, that the game is active, and that the action is a valid next action.
     """
     team = await player.team(game)
-    round_ = await tile.category.board.round
+    round_ = await tile.category.board.round_
 
     if round_.class_ == RoundClass.FINAL:
         is_permitted = not await _has_team_acted(team, action_type, tile)
@@ -100,7 +100,7 @@ async def next_round_action_type(prev_action: ActionOrmModel) -> ActionType:
         ActionType.WAGER:    _collect_wagers,
     }
 
-    round_ = await prev_action.round
+    round_ = await prev_action.round_
     if round_.class_ == RoundClass.FINAL:
         next_action_type_mapping = final_round_mapping
     else:
@@ -132,7 +132,7 @@ async def _buzz_or_choice_if_tiles_available(
     if await _all_teams_have_response(prev_action):
         tiles_available = (
             await TileOrm
-            .filter(category__board__round=await prev_action.round)
+            .filter(category__board__round_=await prev_action.round_)
             .filter(choices__id=None)
             .count()
         )

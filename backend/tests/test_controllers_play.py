@@ -341,11 +341,10 @@ class TestNextRoundActionType:
 
 class TestIsValidAction:
     async def test_valid_only_when_all_inputs_are_non_null(
-        self, game_started_with_team_1, round, team_1, player_1, tile
+        self, game_started_with_team_1, round_, team_1, player_1, tile
     ):
         action = ActionType.CHOICE
         game = game_started_with_team_1
-        round_ = round
         user = player_1
 
         expected = False
@@ -374,9 +373,9 @@ class TestIsValidAction:
 
     @patch("jeopardy.controllers.play.is_active_game")
     async def test_valid_only_when_game_active(
-        self, mock_is_active_game, game, round, team_1, player_1, tile
+        self, mock_is_active_game, game, round_, team_1, player_1, tile
     ):
-        await is_valid_action(game, round, player_1, ActionType.CHOICE, tile)
+        await is_valid_action(game, round_, player_1, ActionType.CHOICE, tile)
         mock_is_active_game.assert_called_with(game)
 
     async def test_valid_only_when_round_is_the_current_round(
@@ -396,24 +395,24 @@ class TestIsValidAction:
 
     @patch("jeopardy.controllers.play.is_player")
     async def test_valid_only_when_user_is_a_player_in_the_game(
-        self, mock_is_player, game, round, team_1, player_1, tile
+        self, mock_is_player, game, round_, team_1, player_1, tile
     ):
-        await is_valid_action(game, round, player_1, ActionType.CHOICE, tile)
+        await is_valid_action(game, round_, player_1, ActionType.CHOICE, tile)
         mock_is_player.assert_called_with(game, player_1)
 
     async def test_valid_only_when_action_is_the_next_allowed_type(
-        self, game_started_with_team_1, round, team_1, player_1, tile
+        self, game_started_with_team_1, round_, team_1, player_1, tile
     ):
         game = game_started_with_team_1
 
         action = ActionType.CHOICE
         expected = True
-        actual = await is_valid_action(game, round, player_1, action, tile)
+        actual = await is_valid_action(game, round_, player_1, action, tile)
         assert expected == actual
 
         action = ActionType.BUZZ
         expected = False
-        actual = await is_valid_action(game, round, player_1, action, tile)
+        actual = await is_valid_action(game, round_, player_1, action, tile)
         assert expected == actual
 
     @patch("jeopardy.controllers.play.is_permitted_to_act")
@@ -421,7 +420,7 @@ class TestIsValidAction:
         self,
         mock_is_permitted_to_act,
         game_started_with_team_1,
-        round,
+        round_,
         team_1,
         player_1,
         tile,
@@ -429,7 +428,7 @@ class TestIsValidAction:
         action = ActionType.CHOICE
         game = game_started_with_team_1
 
-        await is_valid_action(game, round, player_1, action, tile)
+        await is_valid_action(game, round_, player_1, action, tile)
         mock_is_permitted_to_act.assert_called_with(
             game, player_1, action, tile
         )

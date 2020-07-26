@@ -60,8 +60,9 @@ class RoundOrm(BaseOrmModel):
 
 
 class BoardOrm(BaseOrmModel):
-    round = fields.ForeignKeyField(
+    round_ = fields.ForeignKeyField(
         "models.RoundOrm",
+        source_field="round_id",
         related_name="board",
         on_delete="CASCADE",
     )
@@ -78,7 +79,7 @@ class BoardOrm(BaseOrmModel):
         table = "boards"
 
     def __str__(self):
-        return f"Board({self.id, self.round})"
+        return f"Board({self.id, self.round_})"
 
 
 class CategoryOrm(BaseOrmModel):
