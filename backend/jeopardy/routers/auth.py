@@ -26,8 +26,8 @@ async def callback(request: Request):
     metadata = GoogleUserMetadata(**raw_metadata)
     user = await user_from_google_metadata(metadata)
 
-    next = request.session.pop("next")
-    response = RedirectResponse(url=f"/?next={next}", status_code=302)
+    next_ = request.session.pop("next")
+    response = RedirectResponse(url=f"/?next={next_}", status_code=302)
     await login_user(response, user)
     return response
 
