@@ -39,7 +39,11 @@ export default {
     redirectToNext() {
       var next = this.$route.query.next;
       if (next) {
-        this.$router.replace({"name": next});
+        const [ name, gameCode ] = next.split(".");
+        this.$router.replace({
+          "name": name,
+          "params": { gameCode: gameCode }
+        });
       }
     }
   },
