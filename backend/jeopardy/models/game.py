@@ -43,6 +43,22 @@ class GameOrm(BaseOrmModel):
         return f"Game({self.id}, {self.code}, {self.name})"
 
 
+class GameStateOrm(BaseOrmModel):
+    game = fields.ForeignKeyField(
+        "models.GameOrm",
+        related_name="state",
+        on_delete="CASCADE",
+    )
+    full = fields.JSONField(null=True)
+    partial = fields.JSONField(null=True)
+
+    class Meta:
+        table = "game_states"
+
+    def __str__(self):
+        return f"GameState({self.id}, {self.game})"
+
+
 class RoundOrm(BaseOrmModel):
     game = fields.ForeignKeyField(
         "models.GameOrm",
