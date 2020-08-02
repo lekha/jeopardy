@@ -72,10 +72,10 @@ class UserOrm(BaseOrmModel):
 
     async def team(self, game: GameOrm) -> TeamOrm:
         """Find the team a user is on for the game if they are on one."""
-        team = (
+        _team = (
             await TeamOrm
             .filter(game=game)
             .filter(players__id=self.id)
             .first()
         )
-        return team
+        return _team
