@@ -44,7 +44,8 @@ class ActionOrmModel(BaseOrmModel, metaclass=ActionOrmModelMeta):
 
     @async_cached_property
     async def round_(self):
-        return await self.tile.category.board.round_
+        await self.fetch_related("tile__category__board__round_")
+        return self.tile.category.board.round_
 
 
 class NoAction:
@@ -52,6 +53,9 @@ class NoAction:
 
     def __init__(self, round_):
         self._round = round_
+
+    def __eq__(self, other):
+        return (self.type_ == other.type_) and (self._round == other._round)
 
     @async_property
     async def round_(self):

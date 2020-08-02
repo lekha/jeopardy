@@ -2,6 +2,7 @@ import pytest
 
 from jeopardy.play import next_round_action_type
 from jeopardy.models.action import ActionType
+from jeopardy.models.action import NoAction
 
 
 pytestmark = pytest.mark.asyncio
@@ -78,12 +79,12 @@ class TestNextRoundActionType:
         expected = ActionType.BUZZ
         assert expected == actual
 
-    async def test_none_when_no_tiles_left_but_choice_would_be_next(
+    async def test_no_action_when_no_tiles_left_but_choice_would_be_next(
         self, single_round, choice_1, choice_2, response
     ):
         prev_action = response
         actual = await next_round_action_type(prev_action)
-        expected = None
+        expected = NoAction(single_round)
         assert expected == actual
 
     async def test_wager_at_final_round_start(
@@ -118,10 +119,10 @@ class TestNextRoundActionType:
         expected = ActionType.RESPONSE
         assert expected == actual
 
-    async def test_none_after_final_round_all_responses(
+    async def test_no_action_after_final_round_all_responses(
         self, final_round, incorrect_response_1, incorrect_response_2
     ):
         prev_action = incorrect_response_2
         actual = await next_round_action_type(prev_action)
-        expected = None
+        expected = NoAction(final_round)
         assert expected == actual

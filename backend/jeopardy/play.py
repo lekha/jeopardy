@@ -2,6 +2,7 @@ import inspect
 
 from jeopardy.models.action import ActionOrmModel
 from jeopardy.models.action import ActionType
+from jeopardy.models.action import NoAction
 from jeopardy.models.action import ResponseOrm
 from jeopardy.models.game import GameOrm
 from jeopardy.models.game import RoundClass
@@ -10,7 +11,9 @@ from jeopardy.models.game import TileOrm
 from jeopardy.models.user import UserOrm
 
 
-async def next_round_action_type(prev_action: ActionOrmModel) -> ActionType:
+async def next_round_action_type(
+    prev_action: ActionOrmModel
+) -> Optional[ActionType]:
     """Determine actions that are permitted next in the round."""
     basic_round_mapping = {
         None:                ActionType.CHOICE,
@@ -64,7 +67,7 @@ async def _buzz_or_choice_if_tiles_available(
         if tiles_available:
             next_action_type = ActionType.CHOICE
         else:
-            next_action_type = None
+            next_action_type = NoAction(await prev_action.round_)
 
     elif prev_action.is_correct:
         next_action_type = ActionType.CHOICE
@@ -80,7 +83,7 @@ async def _collect_responses(prev_action: ActionOrmModel) -> ActionType:
     await prev_action.fetch_related("game__teams")
     await prev_action.fetch_related("tile__responses")
     if await _all_teams_have_response(prev_action):
-        next_action_type = None
+        next_action_type = NoAction(await prev_action.round_)
     else:
         next_action_type = ActionType.RESPONSE
     return next_action_type
