@@ -13,6 +13,7 @@ class TeamOrm(BaseOrmModel):
         forward_key="user_id",
         backward_key="team_id",
     )
+    score = fields.IntField(default=0)
 
     class Meta:
         table = "teams"
