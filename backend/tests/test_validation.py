@@ -10,6 +10,7 @@ from jeopardy.schema.action import Request
 from jeopardy.schema.action import Wager
 from jeopardy.validation import is_active_game
 from jeopardy.validation import is_permitted_to_act
+from jeopardy.validation import is_permitted_wager
 from jeopardy.validation import is_player
 from jeopardy.validation import validate_game
 from jeopardy.validation import validate_request
@@ -223,6 +224,41 @@ class TestIsPermittedToAct:
         assert expected == actual
 
 
+class TestIsPermittedWager:
+    async def test_permitted_for_valid_wagers(self, team_1):
+        team_1.score = 400
+        await team_1.save()
+
+        valid_amount = 300
+        expected = True
+        actual = is_permitted_wager(team_1, valid_amount)
+        assert expected == actual
+
+    @pytest.mark.parametrize("amount", [14, 69, 88, 666, 1488])
+    async def test_errors_for_amounts_prohibited_(self, team_1, amount):
+        team_1.score = 3000
+        await team_1.save()
+
+        expected = False
+        actual = is_permitted_wager(team_1, amount)
+        assert expected == actual
+
+    async def test_errors_for_amounts_above_team_score(self, team_1):
+        team_1.score = 200
+        await team_1.save()
+
+        too_large_amount = 300
+        expected = False
+        actual = is_permitted_wager(team_1, too_large_amount)
+        assert expected == actual
+
+    async def test_errors_for_negative_amounts(self, team_1):
+        too_low_amount = -5
+        expected = False
+        actual = is_permitted_wager(team_1, too_low_amount)
+        assert expected == actual
+
+
 class TestValidateGame:
     async def test_errors_if_game_does_not_exist(self):
         game = None
@@ -319,27 +355,41 @@ class TestValidateRequest:
         with pytest.raises(exceptions.TileAlreadyChosenException):
             await validate_request(game, user, forbidden_request)
 
-    '''
-    @pytest.mark.parametrize("amount", [14, 69, 88, 666, 1488])
     async def test_errors_when_wager_amount_is_explicitly_prohibited(
-        self, game_after_daily_double_chosen, player_1, tile, amount
+        self, game_after_daily_double_chosen, player_1, tile
     ):
         game = game_after_daily_double_chosen
         user = player_1
         forbidden_request = Request(
             message_id=game.next_message_id,
-            action=Wager(type="wager", tile_id=tile.id, amount=amount),
+            action=Wager(type="wager", tile_id=tile.id, amount=666),
         )
 
-        with pytest.raises(ForbiddenWagerException):
+        with pytest.raises(exceptions.ForbiddenWagerException):
             await validate_request(game, user, forbidden_request)
 
-    @patch("jeopardy.validation.is_valid_wager")
-    async def test_errors_when_wager_amount_is_above_team_score(
-        self, mock_is_valid_wager, game_after_daily_double_chosen, player_1, tile
+    @patch("jeopardy.validation.is_permitted_wager")
+    async def test_checks_when_wager_is_permitted(
+        self,
+        mock_is_permitted_wager,
+        game_after_daily_double_chosen,
+        team_1,
+        player_1,
+        tile,
     ):
-        assert False
-    '''
+        valid_amount = 100
+        team_1.score = 150
+        await team_1.save()
+
+        game = game_after_daily_double_chosen
+        user = player_1
+        request = Request(
+            message_id=game.next_message_id,
+            action=Wager(type="wager", tile_id=tile.id, amount=valid_amount)
+        )
+
+        await validate_request(game, user, request)
+        mock_is_permitted_wager.assert_called_with(team_1, valid_amount)
 
     async def test_errors_if_user_not_permitted_to_perform_the_action(
         self, game_started_with_team_1, player_2, tile

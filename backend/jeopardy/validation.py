@@ -76,6 +76,12 @@ async def _has_team_acted(
     return await action.exists(team=team, tile=tile)
 
 
+def is_permitted_wager(team: TeamOrm, amount: int) -> bool:
+    """Determine if team is allowed to wager an amount."""
+    explicitly_forbidden = {14, 69, 88, 666, 1488}
+    return 0 < amount < team.score and amount not in explicitly_forbidden
+
+
 async def validate_game(game: Optional[GameOrm]) -> None:
     """Validate that the game is currently being played."""
     if game is None or not await is_active_game(game):
@@ -114,3 +120,8 @@ async def validate_request(
 
     if not await is_permitted_to_act(game, user, action_type, tile):
         raise exceptions.ActOutOfTurnException
+
+    if action_type == ActionType.WAGER:
+        team = await user.team(game)
+        if not is_permitted_wager(team, request.action.amount):
+            raise exceptions.ForbiddenWagerException
