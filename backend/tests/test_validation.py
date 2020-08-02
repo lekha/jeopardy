@@ -66,20 +66,6 @@ class TestIsPlayer:
 
 
 class TestIsPermittedToAct:
-    async def test_permitted_only_if_choice_is_for_available_tile(
-        self, game_with_team_1_next, single_round, player_1, tile, chosen_tile
-    ):
-        game = game_with_team_1_next
-        action = ActionType.CHOICE
-
-        expected = True
-        actual = await is_permitted_to_act(game, player_1, action, tile)
-        assert expected == actual
-
-        expected = False
-        actual = await is_permitted_to_act(game, player_1, action, chosen_tile)
-        assert expected == actual
-
     async def test_permitted_only_if_choice_made_by_choosing_team(
         self, game_with_team_1_next, single_round, player_1, player_2, tile
     ):

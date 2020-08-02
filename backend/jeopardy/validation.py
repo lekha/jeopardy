@@ -50,10 +50,7 @@ async def is_permitted_to_act(
         ))
 
     elif action_type == ActionType.CHOICE:
-        is_permitted = all((
-            team == await game.next_chooser,
-            len(await tile.choices) == 0,
-        ))
+        is_permitted = team == await game.next_chooser
 
     elif action_type == ActionType.RESPONSE:
         if tile.is_daily_double:
@@ -114,12 +111,12 @@ async def validate_request(
 
     action_type = request.action.type_
 
+    if not await is_permitted_to_act(game, user, action_type, tile):
+        raise exceptions.ActOutOfTurnException
+
     if action_type == ActionType.CHOICE:
         if len(await tile.choices) > 0:
             raise exceptions.TileAlreadyChosenException
-
-    if not await is_permitted_to_act(game, user, action_type, tile):
-        raise exceptions.ActOutOfTurnException
 
     if action_type == ActionType.WAGER:
         team = await user.team(game)
