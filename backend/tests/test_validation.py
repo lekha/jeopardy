@@ -12,6 +12,7 @@ from jeopardy.validation import is_active_game
 from jeopardy.validation import is_permitted_to_act
 from jeopardy.validation import is_permitted_wager
 from jeopardy.validation import is_player
+from jeopardy.validation import is_round_over
 from jeopardy.validation import validate_game
 from jeopardy.validation import validate_request
 from jeopardy.validation import validate_user
@@ -242,6 +243,36 @@ class TestIsPermittedWager:
         too_low_amount = -5
         expected = False
         actual = is_permitted_wager(team_1, too_low_amount)
+        assert expected == actual
+
+
+class TestIsRoundOver:
+    async def test_is_not_over_when_not_all_basic_round_tiles_chosen(
+        self, game_started_with_team_1, single_round, chosen_tile_1, tile_2
+    ):
+        expected = False
+        actual = await is_round_over(single_round)
+        assert expected == actual
+
+    async def test_is_over_when_all_basic_round_tiles_chosen(
+        self, game_started_with_team_1, single_round, chosen_tile_1
+    ):
+        expected = True
+        actual = await is_round_over(single_round)
+        assert expected == actual
+
+    async def test_is_not_over_when_not_all_final_round_teams_responded(
+        self, game_started_with_team_1, team_2, final_round, responded_tile_1
+    ):
+        expected = False
+        actual = await is_round_over(final_round)
+        assert expected == actual
+
+    async def test_is_over_when_all_final_round_teams_respond(
+        self, game_started_with_team_1, final_round, responded_tile_1
+    ):
+        expected = True
+        actual = await is_round_over(final_round)
         assert expected == actual
 
 

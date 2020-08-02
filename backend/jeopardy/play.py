@@ -1,14 +1,20 @@
 import inspect
+from typing import Optional
 
 from jeopardy.models.action import ActionOrmModel
 from jeopardy.models.action import ActionType
 from jeopardy.models.action import NoAction
 from jeopardy.models.action import ResponseOrm
+from jeopardy.models.action import WagerOrm
 from jeopardy.models.game import GameOrm
 from jeopardy.models.game import RoundClass
 from jeopardy.models.game import RoundOrm
 from jeopardy.models.game import TileOrm
+from jeopardy.models.team import TeamOrm
 from jeopardy.models.user import UserOrm
+from jeopardy.parse import action_orm_from_type
+from jeopardy.schema.action import Action
+from jeopardy.validation import is_round_over
 
 
 async def next_round_action_type(
@@ -105,3 +111,115 @@ async def _collect_wagers(prev_action: ActionOrmModel) -> ActionType:
     else:
         next_action_type = ActionType.RESPONSE
     return next_action_type
+
+
+async def perform(game: GameOrm, player: UserOrm, action: Action):
+    """Update the game by performing the action."""
+    # Store action in database
+    action_orm = await _save_action_in_database(game, player, action)
+
+    # Update next_chooser, next_round, and team score
+    round_ = await game.next_round
+    if action.type_ == ActionType.RESPONSE:
+        team = await player.team(game)
+        tile_value = await _tile_value(game, team, action.tile)
+
+        if action_orm.is_correct:
+            game.next_chooser = team
+            team.score += tile_value
+        else:
+            team.score -= tile_value
+        await team.save()
+
+        if await is_round_over(round_):
+            game.next_round = await _next_round(round_)
+
+            # New round means lowest-scoring team gets to choose
+            teams = await game.teams
+            teams.sort(key=lambda x: x.score)
+            lowest_scoring_team = teams[0]
+            game.next_chooser = lowest_scoring_team
+
+    # Update next_action_type
+    next_action_type = await next_round_action_type(action_orm)
+    if all((
+        game.next_round is not None,             # game isn't over, but
+        game.next_round != round_,               # round has changed
+        isinstance(next_action_type, NoAction),  # because last round ended
+    )):
+        next_action_type = await next_round_action_type(next_action_type)
+    if isinstance(next_action_type, NoAction):   # game is over
+        next_action_type = None
+    game.next_action_type = next_action_type
+
+    # Update next_message_id
+    game.next_message_id += 1
+
+    await game.save()
+
+
+async def _next_round(round_: RoundOrm) -> Optional[RoundOrm]:
+    """Helper for perform."""
+    game = await round_.game
+    all_rounds = await game.rounds
+
+    all_rounds.sort(key=lambda x: x.ordinal)
+    all_rounds.append(None)
+
+    for i, i_round in enumerate(all_rounds):
+        if i_round.id == round_.id:
+            break
+
+    return all_rounds[i+1]
+
+
+async def _save_action_in_database(
+    game: GameOrm, player: UserOrm, action: Action
+) -> ActionOrmModel:
+    """Helper for perform."""
+    action_orm_class = action_orm_from_type(action.type_)
+    tile = await action.tile
+    team = await player.team(game)
+
+    if action.type_ == ActionType.RESPONSE:
+        # TODO: Separate into an is_correct(response) function in validation.py
+        is_correct = (await tile.trivia).question == action.question
+        action_orm = await action_orm_class.create(
+            game=game, tile=tile, team=team, user=player, is_correct=is_correct
+        )
+    elif action.type_ == ActionType.WAGER:
+        action_orm = await action_orm_class.create(
+            game=game, tile=tile, team=team, user=player, amount=action.amount
+        )
+    else:
+        action_orm = await action_orm_class.create(
+            game=game, tile=tile, team=team, user=player
+        )
+
+    return action_orm
+
+
+async def _tile_value(game: GameOrm, team: TeamOrm, tile: TileOrm) -> int:
+    """Helper for perform."""
+    round_ = await tile.round_
+    # Daily double tile or final jeopardy round
+    if tile.is_daily_double or round_.class_ == RoundClass.FINAL:
+        wager = await WagerOrm.get(team=team, tile=tile, game=game)
+        value = wager.amount
+
+    # Normal tile in single or double jeopardy round
+    else:
+        if round_.class_ == RoundClass.SINGLE:
+            multiplier = 200
+        elif round_.class_ == RoundClass.DOUBLE:
+            multiplier = 400
+
+        await tile.fetch_related("category__tiles")
+        category_tiles = list(tile.category.tiles)
+        category_tiles.sort(key=lambda x: x.ordinal)
+        for position, category_tile in enumerate(category_tiles):
+            if category_tile.id == tile.id:
+                break
+        value = multiplier * (position + 1)
+
+    return value

@@ -2,8 +2,11 @@ from typing import Optional
 
 from jeopardy import exceptions
 from jeopardy.models.action import ActionType
+from jeopardy.models.action import ChoiceOrm
+from jeopardy.models.action import ResponseOrm
 from jeopardy.models.game import GameOrm
 from jeopardy.models.game import RoundClass
+from jeopardy.models.game import RoundOrm
 from jeopardy.models.game import TileOrm
 from jeopardy.models.team import TeamOrm
 from jeopardy.models.user import UserOrm
@@ -77,6 +80,53 @@ def is_permitted_wager(team: TeamOrm, amount: int) -> bool:
     """Determine if team is allowed to wager an amount."""
     explicitly_forbidden = {14, 69, 88, 666, 1488}
     return 0 < amount < team.score and amount not in explicitly_forbidden
+
+
+async def is_round_over(round_):
+    """Determine if the current play involves the round's last tile."""
+    # Final round -- count the number of responses submitted
+    if round_.class_ == RoundClass.FINAL:
+        teams = len(await round_.game.teams)
+        if await _num_tiles(round_) * teams == await _num_responses(round_):
+            is_over = True
+        else:
+            is_over = False
+
+    # Basic round -- count the number of tiles chosen
+    else:
+        if await _num_tiles(round_) == await _num_choices(round_):
+            is_over = True
+        else:
+            is_over = False
+
+    return is_over
+
+
+async def _num_tiles(round_: RoundOrm) -> int:
+    """Helper for determining if round is over."""
+    return (
+        await TileOrm
+        .filter(category__board__round__id=round_.id)
+        .count()
+    )
+
+async def _num_choices(round_: RoundOrm) -> int:
+    """Helper for determining if round is over."""
+    return (
+        await ChoiceOrm
+        .filter(game__id=round_.game_id)
+        .filter(tile__category__board__round__id=round_.id)
+        .count()
+    )
+
+async def _num_responses(round_) -> int:
+    """Helper for determining if round is over."""
+    return (
+        await ResponseOrm
+        .filter(game__id=round_.game_id)
+        .filter(tile__category__board__round__id=round_.id)
+        .count()
+    )
 
 
 async def validate_game(game: Optional[GameOrm]) -> None:

@@ -237,6 +237,22 @@ async def chosen_tile(database, game, team_2, player_2, tile_2):
 
 
 @pytest.fixture
+async def chosen_tile_1(database, game, team_1, player_1, tile_1):
+    await ChoiceOrm.create(
+        game=game, tile=tile_1, team=team_1, user=player_1
+    )
+    yield tile_1
+
+
+@pytest.fixture
+async def responded_tile_1(database, game, team_1, player_1, tile_1):
+    await ResponseOrm.create(
+        game=game, tile=tile_1, team=team_1, user=player_1, is_correct=True,
+    )
+    yield tile_1
+
+
+@pytest.fixture
 async def round_2_tile(database, round_2):
     board = BoardOrm(
         round_=round_2,
@@ -471,3 +487,49 @@ async def incoming_request_wager():
             "amount": 100,
         },
     }
+
+
+@pytest.fixture
+async def request_buzz(database, game, tile):
+    next_message_id = 4
+    game.next_message_id = next_message_id
+    await game.save()
+    return Request(
+        message_id=next_message_id,
+        action=Action(type="buzz", tile_id=tile.id),
+    )
+
+
+@pytest.fixture
+async def request_choice(database, game, tile):
+    next_message_id = 8
+    game.next_message_id = next_message_id
+    await game.save()
+    return Request(
+        message_id=next_message_id,
+        action=Action(type="choice", tile_id=tile.id),
+    )
+
+
+@pytest.fixture
+async def request_response(database, game, tile):
+    next_message_id = 12
+    game.next_message_id = next_message_id
+    return Request(
+        message_id=next_message_id,
+        action=Response(
+            type="response",
+            tile_id=tile.id,
+            question="Test question?",
+        ),
+    )
+
+
+@pytest.fixture
+async def request_wager(database, game, tile):
+    next_message_id = 16
+    game.next_message_id = next_message_id
+    return Request(
+        message_id=next_message_id,
+        action=Wager(type="wager", tile_id=tile.id, amount=100),
+    )
