@@ -7,10 +7,13 @@ from authlib.integrations.starlette_client import OAuth
 from fastapi import Depends
 from fastapi import Header
 from fastapi import Response
+from fastapi.security import SecurityScopes
 import jwt
 
+from jeopardy import exceptions
 from jeopardy.models.user import GoogleUserMetadataOrm
 from jeopardy.models.user import Nobody
+from jeopardy.models.user import UserType
 from jeopardy.models.user import UserOrm
 from jeopardy.schema.user import GoogleUserMetadata
 
@@ -106,7 +109,9 @@ async def user_from_google_metadata(
     return user
 
 
-async def current_user(authorization: Optional[str] = Header(None)):
+async def current_user(
+    authorization: Optional[str] = Header(None)
+) -> UserType:
     """Determine the currently-logged in user from the request header."""
     try:
         user = await user_from_token(authorization)
@@ -115,3 +120,17 @@ async def current_user(authorization: Optional[str] = Header(None)):
     except:
         user = Nobody
     return user
+
+
+async def authorize(
+    security: SecurityScopes, user: UserType = Depends(current_user)
+) -> UserType:
+    """Raise error if user isn't allowed access to the resource."""
+    if not user.is_active:
+        raise exceptions.InvalidTokenException(security)
+
+    scopes_for_google_users_only = {"create"}
+    is_google_user = user.google_metadata_id is not None
+    for scope in security.scopes:
+        if scope in scopes_for_google_users_only and not is_google_user:
+            raise exceptions.InsufficientScopeException(security)

@@ -2,9 +2,11 @@
 from os import getenv
 
 from fastapi import FastAPI
+from fastapi import Security
 from starlette.middleware.sessions import SessionMiddleware
 from tortoise.contrib.fastapi import register_tortoise
 
+from jeopardy.auth import authorize
 from jeopardy.middleware import AuthenticationMiddleware
 from jeopardy.routers import auth
 from jeopardy.routers import create
@@ -21,7 +23,11 @@ register_tortoise(
     add_exception_handlers=True,
 )
 app.include_router(auth.router, prefix="/user")
-app.include_router(create.router, prefix="/api/v1")
+app.include_router(
+    create.router,
+    prefix="/api/v1",
+    dependencies=[Security(authorize, scopes=["create"])],
+)
 app.include_router(play.router, prefix="/api/v1")
 
 

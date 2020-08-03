@@ -1,4 +1,5 @@
 from enum import Enum
+from typing import Union
 
 from tortoise import fields
 
@@ -79,3 +80,6 @@ class UserOrm(BaseOrmModel):
             .first()
         )
         return _team
+
+
+UserType = Union[UserOrm, Nobody]
