@@ -13,7 +13,7 @@
 </template>
 
 <script>
-import BaseLayout from "../layouts/base.vue";
+import BaseLayout from "@/layouts/base.vue";
 
 export default {
   name: "Home",

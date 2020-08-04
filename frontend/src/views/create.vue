@@ -10,8 +10,9 @@
 </template>
 
 <script>
-import BaseLayout from "../layouts/base.vue";
-import Game from "../components/game.vue";
+import { api } from "@/api";
+import BaseLayout from "@/layouts/base.vue";
+import Game from "@/components/game.vue";
 
 export default {
   name: "Create",
@@ -26,10 +27,10 @@ export default {
   },
   methods: {
     createGame() {
-      this.$http.post("api/v1/game")
-      .then(response => {
-        this.game = response.data;
-      })
+      api.createGame()
+      .then(game => {
+        this.game = game;
+      });
     }
   }
 }
