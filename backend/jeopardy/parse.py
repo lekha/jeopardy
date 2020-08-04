@@ -37,6 +37,10 @@ def action_schema_from_type(action_type: ActionType) -> Action:
     return type_to_schema[action_type]
 
 
+def parse_game_code(game_code: str) -> str:
+    return game_code.upper()
+
+
 def parse_request(action_type: ActionType, request: Dict) -> Request:
     action = action_schema_from_type(action_type)
     try:

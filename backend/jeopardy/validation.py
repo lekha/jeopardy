@@ -14,6 +14,10 @@ from jeopardy.schema.action import Request
 from jeopardy.parse import action_orm_from_type
 
 
+def is_valid_game_code(game_code: str) -> bool:
+    return len(game_code) == 4
+
+
 async def is_active_game(game: GameOrm) -> bool:
     """Confirm that the game is active."""
     return game.is_started and not game.is_finished
