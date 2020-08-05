@@ -21,6 +21,7 @@ from jeopardy.models.action import WagerOrm
 from jeopardy.models.game import BoardOrm
 from jeopardy.models.game import CategoryOrm
 from jeopardy.models.game import GameOrm
+from jeopardy.models.game import GameStatus
 from jeopardy.models.game import RoundClass
 from jeopardy.models.game import RoundOrm
 from jeopardy.models.game import TileOrm
@@ -124,8 +125,7 @@ async def game(database, google_user):
         owner=google_user,
         max_teams=3,
         max_players_per_team=3,
-        is_started=True,
-        is_finished=False,
+        status=GameStatus.STARTED,
     )
     await _game.save()
     yield _game

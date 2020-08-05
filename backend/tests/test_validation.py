@@ -5,6 +5,7 @@ import pytest
 from jeopardy import exceptions
 from jeopardy.models.action import ActionType
 from jeopardy.models.game import GameOrm
+from jeopardy.models.game import GameStatus
 from jeopardy.schema.action import Action
 from jeopardy.schema.action import Request
 from jeopardy.schema.action import Wager
@@ -22,20 +23,26 @@ pytestmark = pytest.mark.asyncio
 
 
 class TestIsActiveGame:
-    async def test_game_is_active_when_started_but_not_finished(self):
-        game = GameOrm(is_started=True, is_finished=False)
-        actual = await is_active_game(game)
-        expected = True
-        assert expected == actual
-
-    async def test_game_is_inactive_when_not_started(self):
-        game = GameOrm(is_started=False)
+    async def test_game_is_inactive_when_editable(self):
+        game = GameOrm(status=GameStatus.EDITABLE)
         actual = await is_active_game(game)
         expected = False
         assert expected == actual
 
+    async def test_game_is_active_when_joinable(self):
+        game = GameOrm(status=GameStatus.JOINABLE)
+        actual = await is_active_game(game)
+        expected = True
+        assert expected == actual
+
+    async def test_game_is_active_when_started(self):
+        game = GameOrm(status=GameStatus.STARTED)
+        actual = await is_active_game(game)
+        expected = True
+        assert expected == actual
+
     async def test_game_is_inactive_when_finished(self):
-        game = GameOrm(is_finished=True)
+        game = GameOrm(status=GameStatus.FINISHED)
         actual = await is_active_game(game)
         expected = False
         assert expected == actual
