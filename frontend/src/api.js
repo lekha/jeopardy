@@ -18,5 +18,14 @@ export const api = {
     .then(response => {
       return response.data;
     });
+  },
+  joinTeam(socket, teamName) {
+    var message = {
+      "action": {
+        "type": "join",
+        "team": teamName
+      }
+    }
+    socket.send(JSON.stringify(message));
   }
 }

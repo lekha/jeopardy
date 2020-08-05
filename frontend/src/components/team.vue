@@ -1,6 +1,7 @@
 <template>
 <div class="team">
   <p>Team: {{ name }}</p>
+  <button v-if="is_joinable" v-on:click="joinTeam(name)">Join!</button>
   <ul>
     <li v-for="player in players" v-bind:key="player.id">
       <player v-bind:player="player"></player>
@@ -10,6 +11,7 @@
 </template>
 
 <script>
+import { api } from "@/api";
 import Player from "./player.vue";
 
 export default {
@@ -27,7 +29,14 @@ export default {
     players() { return this.team.players; }
   },
   props: {
-    team: Object
+    team: Object,
+    is_joinable: Boolean,
+    socket: WebSocket
+  },
+  methods: {
+    joinTeam(teamName) {
+      api.joinTeam(this.socket, teamName);
+    }
   }
 }
 </script>
