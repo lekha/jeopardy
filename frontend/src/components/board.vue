@@ -18,8 +18,10 @@ export default {
   },
   data() {
     return {
-      categories: this.board.categories
     }
+  },
+  computed: {
+    categories() { return this.board.categories; }
   },
   props: {
     board: Object

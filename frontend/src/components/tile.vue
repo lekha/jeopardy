@@ -9,10 +9,12 @@ export default {
   name: "Tile",
   data() {
     return {
-      points: this.tile.points,
-      answer: this.tile.answer,
-      question: this.tile.question
     }
+  },
+  computed: {
+    points() { return this.tile.points; },
+    answer() { return this.tile.answer; },
+    question() { return this.tile.question; }
   },
   props: {
     tile: Object

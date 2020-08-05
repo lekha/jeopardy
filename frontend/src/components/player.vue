@@ -7,8 +7,10 @@ export default {
   name: "Player",
   data() {
     return {
-      username: this.player.username,
     }
+  },
+  computed: {
+    username() { return this.player.username; }
   },
   props: {
     player: Object

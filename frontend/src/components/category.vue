@@ -19,9 +19,11 @@ export default {
   },
   data() {
     return {
-      name: this.category.name,
-      tiles: this.category.tiles
     }
+  },
+  computed: {
+    name() { return this.category.name; },
+    tiles() { return this.category.tiles; }
   },
   props: {
     category: Object

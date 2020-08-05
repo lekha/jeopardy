@@ -19,10 +19,12 @@ export default {
   },
   data() {
     return {
-      name: this.team.name,
-      has_pressed_buzzer: this.team.has_pressed_buzzer,
-      players: this.team.players
     }
+  },
+  computed: {
+    name() { return this.team.name; },
+    has_pressed_buzzer() { return this.team.has_pressed_buzzer; },
+    players() { return this.team.players; }
   },
   props: {
     team: Object

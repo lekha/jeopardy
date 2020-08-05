@@ -23,11 +23,13 @@ export default {
   },
   data() {
     return {
-      code: this.game.code,
-      round_class: this.game.round_.class_,
-      board: this.game.round_.board,
-      teams: this.game.teams
     }
+  },
+  computed: {
+    code() { return this.game.code; },
+    round_class() { return this.game.round_.class_; },
+    board() { return this.game.round_.board; },
+    teams() { return this.game.teams; }
   },
   props: {
     game: Object
