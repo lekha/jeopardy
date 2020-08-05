@@ -8,11 +8,27 @@ from jeopardy.models.action import ActionType
 from jeopardy.models.action import NoAction
 from jeopardy.models.game import GameOrm
 from jeopardy.models.game import TileOrm
+from jeopardy.models.reveals import BoardLevel
+from jeopardy.models.reveals import BoardLevelDetail
+from jeopardy.models.reveals import RoundRevealOrm
 from jeopardy.models.team import TeamOrm
 from jeopardy.schema.action import Response
 
 
 pytestmark = pytest.mark.asyncio
+
+
+@pytest.fixture(params=["buzz", "choice", "response", "wager"])
+def parsed_request(
+    request, request_buzz, request_choice, request_response, request_wager
+):
+    param_to_fixture = {
+        "buzz":     request_buzz,
+        "choice":   request_choice,
+        "response": request_response,
+        "wager":    request_wager,
+    }
+    return param_to_fixture[request.param]
 
 
 class TestNextRoundActionType:
@@ -397,3 +413,80 @@ class TestPerform:
         expected = original_score - wager.amount
         actual = (await TeamOrm.get(id=team_1.id)).score
         assert expected == actual
+
+    async def test_tile_daily_double_detail_revealed_only_after_choice(
+        self, game_started_with_team_1, player_1, tile, parsed_request
+    ):
+        game = game_started_with_team_1
+        player = player_1
+        await perform(game, player, parsed_request.action)
+
+        reveal = await RoundRevealOrm.get_or_none(
+            level=BoardLevel.TILE,
+            level_id=tile.id,
+            detail=BoardLevelDetail.IS_DAILY_DOUBLE,
+        )
+        if parsed_request.action.type_ == ActionType.CHOICE:
+            assert reveal is not None
+        else:
+            assert reveal is None
+
+    async def test_normal_tile_answer_revealed_only_after_choice(
+        self, game_started_with_team_1, player_1, normal_tile, parsed_request
+    ):
+        game = game_started_with_team_1
+        player = player_1
+        await perform(game, player, parsed_request.action)
+
+        reveal = await RoundRevealOrm.get_or_none(
+            level=BoardLevel.TILE,
+            level_id=normal_tile.id,
+            detail=BoardLevelDetail.ANSWER,
+        )
+        if parsed_request.action.type_ == ActionType.CHOICE:
+            assert reveal is not None
+        elif parsed_request.action.type_ == ActionType.WAGER:
+            pass  # no wager for normal tiles
+        else:
+            assert reveal is None
+
+    @patch("jeopardy.play._tile_value")
+    async def test_daily_double_tile_answer_revealed_only_after_wager(
+        self,
+        mock_tile_value,
+        game_started_with_team_1,
+        player_1,
+        daily_double_tile,
+        parsed_request,
+    ):
+        mock_tile_value.return_value = 100
+        game = game_started_with_team_1
+        player = player_1
+        await perform(game, player, parsed_request.action)
+
+        reveal = await RoundRevealOrm.get_or_none(
+            level=BoardLevel.TILE,
+            level_id=daily_double_tile.id,
+            detail=BoardLevelDetail.ANSWER,
+        )
+        if parsed_request.action.type_ == ActionType.WAGER:
+            assert reveal is not None
+        else:
+            assert reveal is None
+
+    async def test_tile_question_revealed_only_after_response(
+        self, game_started_with_team_1, player_1, tile, parsed_request
+    ):
+        game = game_started_with_team_1
+        player = player_1
+        await perform(game, player, parsed_request.action)
+
+        reveal = await RoundRevealOrm.get_or_none(
+            level=BoardLevel.TILE,
+            level_id=tile.id,
+            detail=BoardLevelDetail.QUESTION,
+        )
+        if parsed_request.action.type_ == ActionType.RESPONSE:
+            assert reveal is not None
+        else:
+            assert reveal is None
