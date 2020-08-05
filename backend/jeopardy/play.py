@@ -8,6 +8,7 @@ from jeopardy.models.action import NoAction
 from jeopardy.models.action import ResponseOrm
 from jeopardy.models.action import WagerOrm
 from jeopardy.models.game import GameOrm
+from jeopardy.models.game import GameStatus
 from jeopardy.models.game import RoundClass
 from jeopardy.models.game import RoundOrm
 from jeopardy.models.game import TileOrm
@@ -19,6 +20,16 @@ from jeopardy.models.user import UserOrm
 from jeopardy.parse import action_orm_from_type
 from jeopardy.schema.action import Action
 from jeopardy.validation import is_round_over
+
+
+async def start(game: GameOrm) -> None:
+    """Create teams and allow users to start joining a game."""
+    game.status = GameStatus.JOINABLE
+    await game.save()
+
+    team_names = ["Elf", "Goblin", "Ogre", "Troll", "Wizard"]
+    for i in range(game.max_teams):
+        await TeamOrm.create(game=game, name=f"Team {team_names[i]}")
 
 
 async def next_round_action_type(

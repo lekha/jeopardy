@@ -4,9 +4,11 @@ import pytest
 
 from jeopardy.play import next_round_action_type
 from jeopardy.play import perform
+from jeopardy.play import start
 from jeopardy.models.action import ActionType
 from jeopardy.models.action import NoAction
 from jeopardy.models.game import GameOrm
+from jeopardy.models.game import GameStatus
 from jeopardy.models.game import TileOrm
 from jeopardy.models.reveals import BoardLevel
 from jeopardy.models.reveals import BoardLevelDetail
@@ -29,6 +31,20 @@ def parsed_request(
         "wager":    request_wager,
     }
     return param_to_fixture[request.param]
+
+
+class TestStart:
+    async def test_new_teams_created(self, game):
+        await start(game)
+        expected = game.max_teams
+        actual = await TeamOrm.filter(game=game).count()
+        assert expected == actual
+
+    async def test_game_status_changed_to_joinable(self, game):
+        await start(game)
+        expected = GameStatus.JOINABLE
+        actual = game.status
+        assert expected == actual
 
 
 class TestNextRoundActionType:
