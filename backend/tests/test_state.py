@@ -17,4 +17,4 @@ class TestFull:
         tile_2,
     ):
         game = game_started_with_team_1
-        await state.current(game.code)
+        await state.current(game)

@@ -2,6 +2,7 @@ import inspect
 from typing import Collection
 from typing import Optional
 
+from jeopardy import exceptions
 from jeopardy.models.action import ActionOrmModel
 from jeopardy.models.action import ActionType
 from jeopardy.models.action import NoAction
@@ -18,8 +19,24 @@ from jeopardy.models.reveals import RoundRevealOrm
 from jeopardy.models.team import TeamOrm
 from jeopardy.models.user import UserOrm
 from jeopardy.parse import action_orm_from_type
+from jeopardy.parse import parse_game_code
 from jeopardy.schema.action import Action
 from jeopardy.validation import is_round_over
+from jeopardy.validation import is_valid_game_code
+
+
+async def game_from_code(raw_game_code: str) -> GameOrm:
+    """Validate the input code and retrieve the associated GameOrm."""
+    if not is_valid_game_code(raw_game_code):
+        raise exceptions.ForbiddenAccessException
+
+    game_code = parse_game_code(raw_game_code)
+    game = await GameOrm.get_or_none(code=game_code)
+
+    if game is None:
+        raise exceptions.ForbiddenAccessException
+
+    return game
 
 
 async def start(game: GameOrm) -> None:

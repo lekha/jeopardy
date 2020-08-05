@@ -6,25 +6,29 @@ from fastapi import Depends
 from fastapi import status
 from starlette.websockets import WebSocket
 
-from jeopardy import exceptions
 from jeopardy import state
 from jeopardy.auth import current_user
+from jeopardy.models.game import GameOrm
+from jeopardy.models.game import GameStatus
 from jeopardy.models.user import UserOrm
-from jeopardy.parse import parse_game_code
-from jeopardy.validation import is_valid_game_code
+from jeopardy.play import game_from_code
+from jeopardy.play import start
 
 
 router = APIRouter()
 
 
 @router.get("/game/{raw_game_code}")
-async def get_game(raw_game_code: str) -> Mapping:
-    if not is_valid_game_code(raw_game_code):
-        raise exceptions.ForbiddenAccessException
+async def get_game(game: GameOrm = Depends(game_from_code)) -> Mapping:
+    return (await state.full(game)).dict()
 
-    game_code = parse_game_code(raw_game_code)
-    game = await state.full(game_code)
-    return game.dict()
+
+@router.post("/start/{raw_game_code}")
+async def start_game(game: GameOrm = Depends(game_from_code)) -> Mapping:
+    """Allow users to start joining a game."""
+    if game.status == GameStatus.EDITABLE:
+        await start(game)
+    return (await state.full(game)).dict()
 
 
 @router.websocket("/play/{game_code}")
