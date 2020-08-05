@@ -116,6 +116,17 @@ async def anonymous_user(database):
 
 
 @pytest.fixture
+async def some_user(database):
+    user = UserOrm(
+        username="test_some_user",
+        is_active=True,
+        auth_provider="none",
+    )
+    await user.save()
+    yield user
+
+
+@pytest.fixture
 async def game(database, google_user):
     # Generate random code so that tests are scoped to their own game
     code = "".join(random.choice(string.ascii_uppercase) for _ in range(4))
@@ -440,6 +451,14 @@ async def game_after_daily_double_chosen(
         game=game, tile=tile, team=team_1, user=player_1
     )
 
+    yield game
+
+
+@pytest.fixture
+async def game_for_up_to_two_players(database, game):
+    game.max_teams = 2
+    game.max_players_per_team = 1
+    await game.save()
     yield game
 
 

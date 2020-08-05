@@ -6,13 +6,16 @@ from fastapi import Depends
 from fastapi import status
 from starlette.websockets import WebSocket
 
+from jeopardy import exceptions
 from jeopardy import state
 from jeopardy.auth import current_user
 from jeopardy.models.game import GameOrm
 from jeopardy.models.game import GameStatus
 from jeopardy.models.user import UserOrm
+from jeopardy.play import assign
 from jeopardy.play import game_from_code
 from jeopardy.play import start
+from jeopardy.validation import is_active_game
 
 
 router = APIRouter()
@@ -50,6 +53,34 @@ async def play(
         await websocket.send_json(redirect_to_login)
         await websocket.close()
         return
+
+    # Find game
+    try:
+        game = await game_from_code(game_code)
+        if not (await is_active_game(game)):
+            raise exceptions.ForbiddenAccessException
+    except exceptions.ForbiddenAccessException:
+        game_unavailable_response = {
+            "status_code": 404,
+            "message": "Game unavailable. Please check the URL entered.",
+        }
+        await websocket.send_json(game_unavailable_response)
+        await websocket.close()
+        return
+
+    # Assign to team
+    team_state = await state.full(game)
+    team_state.display.level = "team"
+    await websocket.send_json(team_state.json())
+
+    data = await websocket.receive_json()
+    if data["action"]["type"] == "join":
+        team_name = data["action"]["team"]
+        await assign(game, user, team_name)
+
+    team_state = await state.full(game)
+    team_state.display.level = "team"
+    await websocket.send_json(team_state.json())
 
     while True:
         data = await websocket.receive_json()

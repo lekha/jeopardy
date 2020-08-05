@@ -1,6 +1,9 @@
 import inspect
+import random
 from typing import Collection
 from typing import Optional
+
+from tortoise.functions import Count
 
 from jeopardy import exceptions
 from jeopardy.models.action import ActionOrmModel
@@ -47,6 +50,42 @@ async def start(game: GameOrm) -> None:
     team_names = ["Elf", "Goblin", "Ogre", "Troll", "Wizard"]
     for i in range(game.max_teams):
         await TeamOrm.create(game=game, name=f"Team {team_names[i]}")
+
+
+async def assign(
+    game: GameOrm, user: UserOrm, team_name: Optional[str] = None
+) -> TeamOrm:
+    """Assign the user to a team in the game. If no team name provided, assign
+    to a team at random."""
+    # Early exit if user is already member of team they desire
+    current_team = await user.team(game)
+    if current_team is not None:
+        if (team_name is None) or (current_team == team_name):
+            return current_team
+
+    # Find teams that still have capacity and match the user's desired choice
+    teams = (
+        await TeamOrm
+        .annotate(players_count=Count("players"))
+        .filter(game=game)
+        .filter(players_count__lt=game.max_players_per_team)
+        .all()
+    )
+    if team_name is not None:
+        teams = [x for x in teams if x.name == team_name]
+
+    if len(teams) == 0:
+        raise exceptions.TeamAtMaxCapacityException
+
+    # Remove user from old team if on one
+    if current_team is not None:
+        await current_team.players.remove(user)
+
+    # Assign user to new team
+    new_team = random.choice(teams)
+    await new_team.players.add(user)
+
+    return new_team
 
 
 async def next_round_action_type(

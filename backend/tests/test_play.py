@@ -2,6 +2,8 @@ from unittest.mock import patch
 
 import pytest
 
+from jeopardy import exceptions
+from jeopardy.play import assign
 from jeopardy.play import next_round_action_type
 from jeopardy.play import perform
 from jeopardy.play import start
@@ -45,6 +47,68 @@ class TestStart:
         expected = GameStatus.JOINABLE
         actual = game.status
         assert expected == actual
+
+
+class TestAssign:
+    async def test_chosen_team_when_within_capacity(
+        self, game_for_up_to_two_players, team_1, team_2, some_user
+    ):
+        game = game_for_up_to_two_players
+        desired_team = team_2
+
+        actual = await assign(game, some_user, desired_team.name)
+        expected = desired_team
+        assert expected == actual
+
+    async def test_errors_when_chosen_team_is_at_capacity(
+        self, game_for_up_to_two_players, team_1, team_2, player_1, some_user
+    ):
+        game = game_for_up_to_two_players
+        team_at_capacity = team_1
+
+        with pytest.raises(exceptions.TeamAtMaxCapacityException):
+            await assign(game, some_user, team_at_capacity.name)
+
+    async def test_random_team_when_none_chosen(
+        self, game_for_up_to_two_players, team_1, team_2, some_user
+    ):
+        game = game_for_up_to_two_players
+        team = await assign(game, some_user)
+        assert isinstance(team, TeamOrm)
+
+    async def test_errors_when_all_teams_at_capacity(
+        self,
+        game_for_up_to_two_players,
+        team_1,
+        team_2,
+        player_1,
+        player_2,
+        some_user,
+    ):
+        game = game_for_up_to_two_players
+        with pytest.raises(exceptions.TeamAtMaxCapacityException):
+            await assign(game, some_user)
+
+    async def test_does_not_change_current_team_if_no_new_team_specified(
+        self, game, team_1, team_2, player_1
+    ):
+        actual = await assign(game, player_1)
+        expected = team_1
+        assert expected == actual
+
+    async def test_changes_current_team_if_user_switches(
+        self, game, team_1, team_2, player_1
+    ):
+        actual = await player_1.team(game)
+        expected = team_1
+        assert expected == actual
+
+        actual = await assign(game, player_1, team_2.name)
+        expected = team_2
+        assert expected == actual
+
+        await team_1.fetch_related("players")
+        assert len(team_1.players) == 0
 
 
 class TestNextRoundActionType:

@@ -56,6 +56,11 @@ class ForbiddenAccessException(Exception):
     pass
 
 
+class TeamAtMaxCapacityException(ForbiddenAccessException):
+    """Exception when the team cannot accept any additional players."""
+    pass
+
+
 class InvalidRequestException(Exception):
     """Exception for invalid incoming requests from users."""
     pass
