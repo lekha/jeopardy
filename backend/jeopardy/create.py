@@ -56,4 +56,4 @@ async def game(
             )
             await TileOrm.create(category=category, trivia=trivia, ordinal=j)
 
-    return await state.current(game_orm.code)
+    return await state.full(game_orm.code)

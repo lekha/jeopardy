@@ -23,7 +23,7 @@ async def get_game(raw_game_code: str) -> Mapping:
         raise exceptions.ForbiddenAccessException
 
     game_code = parse_game_code(raw_game_code)
-    game = await state.current(game_code)
+    game = await state.full(game_code)
     return game.dict()
 
 

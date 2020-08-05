@@ -6,7 +6,7 @@ import jeopardy.state as state
 pytestmark = pytest.mark.asyncio
 
 
-class TestCurrent:
+class TestFull:
     async def test_state_exists_for_game_with_teams_and_tiles(
         self,
         game_started_with_team_1,
