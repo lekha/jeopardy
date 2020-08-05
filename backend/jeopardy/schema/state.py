@@ -25,6 +25,7 @@ def sorted_by_ordinal(value) -> List:
 
 
 class Player(BaseModel):
+    id: int
     username: str
 
     class Config:
@@ -32,6 +33,7 @@ class Player(BaseModel):
 
 
 class Team(BaseModel):
+    id: int
     has_pressed_buzzer: bool = False
     name: str
     players: List[Player] = []

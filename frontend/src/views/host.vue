@@ -2,6 +2,7 @@
 <base-layout>
   <template v-slot:main>
     <template v-if="game">
+      <button v-on:click="startGame">Allow players to join teams</button>
       <game v-bind:game="game"></game>
     </template>
     <p v-else>Game not found for code: {{ gameCode }}</p>
@@ -29,6 +30,12 @@ export default {
   methods: {
     setGame() {
       api.getGame(this.gameCode)
+      .then(game => {
+        this.game = game;
+      });
+    },
+    startGame() {
+      api.startGame(this.gameCode)
       .then(game => {
         this.game = game;
       });

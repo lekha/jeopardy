@@ -12,5 +12,11 @@ export const api = {
     .then(response => {
       return response.data;
     });
+  },
+  startGame(gameCode) {
+    return axios.post("/api/v1/start/" + gameCode)
+    .then(response => {
+      return response.data;
+    });
   }
 }
