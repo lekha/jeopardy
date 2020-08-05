@@ -73,14 +73,15 @@ async def play(
     team_state.display.level = "team"
     await websocket.send_json(team_state.json())
 
-    data = await websocket.receive_json()
-    if data["action"]["type"] == "join":
-        team_name = data["action"]["team"]
-        await assign(game, user, team_name)
+    while True:
+        data = await websocket.receive_json()
+        if data["action"]["type"] == "join":
+            team_name = data["action"]["team"]
+            await assign(game, user, team_name)
 
-    team_state = await state.full(game)
-    team_state.display.level = "team"
-    await websocket.send_json(team_state.json())
+        team_state = await state.full(game)
+        team_state.display.level = "team"
+        await websocket.send_json(team_state.json())
 
     while True:
         data = await websocket.receive_json()
