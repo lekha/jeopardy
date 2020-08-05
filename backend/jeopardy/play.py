@@ -1,4 +1,5 @@
 import inspect
+from typing import Collection
 from typing import Optional
 
 from jeopardy.models.action import ActionOrmModel
@@ -10,6 +11,9 @@ from jeopardy.models.game import GameOrm
 from jeopardy.models.game import RoundClass
 from jeopardy.models.game import RoundOrm
 from jeopardy.models.game import TileOrm
+from jeopardy.models.reveals import BoardLevel
+from jeopardy.models.reveals import BoardLevelDetail
+from jeopardy.models.reveals import RoundRevealOrm
 from jeopardy.models.team import TeamOrm
 from jeopardy.models.user import UserOrm
 from jeopardy.parse import action_orm_from_type
@@ -118,8 +122,17 @@ async def perform(game: GameOrm, player: UserOrm, action: Action):
     # Store action in database
     action_orm = await _save_action_in_database(game, player, action)
 
-    # Update next_chooser, next_round, and team score
+    # Update state to reveal more information
     round_ = await game.next_round
+    for detail in _detail_revealed(action.type_, action.tile.is_daily_double):
+        await RoundRevealOrm.create(
+            round_=round_,
+            level=BoardLevel.TILE,
+            level_id=action.tile.id,
+            detail=detail,
+        )
+
+    # Update next_chooser, next_round, and team score
     if action.type_ == ActionType.RESPONSE:
         team = await player.team(game)
         tile_value = await _tile_value(game, team, action.tile)
@@ -156,6 +169,25 @@ async def perform(game: GameOrm, player: UserOrm, action: Action):
     game.next_message_id += 1
 
     await game.save()
+
+
+def _detail_revealed(
+    action_type: ActionType, is_daily_double: bool
+) -> Collection[BoardLevelDetail]:
+    """Helper for perform."""
+    details = set()
+    if action_type == ActionType.CHOICE:
+        details.add(BoardLevelDetail.IS_DAILY_DOUBLE)
+        if not is_daily_double:
+            details.add(BoardLevelDetail.ANSWER)
+
+    elif action_type == ActionType.WAGER:
+        details.add(BoardLevelDetail.ANSWER)
+
+    elif action_type == ActionType.RESPONSE:
+        details.add(BoardLevelDetail.QUESTION)
+
+    return details
 
 
 async def _next_round(round_: RoundOrm) -> Optional[RoundOrm]:

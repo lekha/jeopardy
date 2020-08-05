@@ -3,7 +3,7 @@ from jeopardy.models.game import RoundClass
 from jeopardy.schema.state import Game
 
 
-async def current(game_code: str) -> Game:
+async def full(game_code: str) -> Game:
     """Fetch the full current state of the game."""
     # Fetch needed values from database
     game_orm = await GameOrm.get(code=game_code)

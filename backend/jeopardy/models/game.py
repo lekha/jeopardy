@@ -7,6 +7,13 @@ from jeopardy.models.action import ActionType
 from jeopardy.models.base import BaseOrmModel
 
 
+class GameStatus(Enum):
+    EDITABLE = "editable"
+    JOINABLE = "joinable"
+    STARTED  = "started"
+    FINISHED = "finished"
+
+
 class RoundClass(Enum):
     SINGLE = "single"
     DOUBLE = "double"
@@ -19,8 +26,7 @@ class GameOrm(BaseOrmModel):
     owner = fields.ForeignKeyField("models.UserOrm", related_name="games")
     max_teams = fields.IntField()
     max_players_per_team = fields.IntField()
-    is_started = fields.BooleanField(default=False)
-    is_finished = fields.BooleanField(default=False)
+    status = fields.CharEnumField(GameStatus, default=GameStatus.EDITABLE)
     next_message_id = fields.BigIntField(null=True)
     next_round = fields.ForeignKeyField(
         "models.RoundOrm",
@@ -41,22 +47,6 @@ class GameOrm(BaseOrmModel):
 
     def __str__(self):
         return f"Game({self.id}, {self.code}, {self.name})"
-
-
-class GameStateOrm(BaseOrmModel):
-    game = fields.ForeignKeyField(
-        "models.GameOrm",
-        related_name="state",
-        on_delete="CASCADE",
-    )
-    full = fields.JSONField(null=True)
-    partial = fields.JSONField(null=True)
-
-    class Meta:
-        table = "game_states"
-
-    def __str__(self):
-        return f"GameState({self.id}, {self.game})"
 
 
 class RoundOrm(BaseOrmModel):

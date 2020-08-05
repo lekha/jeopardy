@@ -5,6 +5,7 @@ from jeopardy.models.action import ActionType
 from jeopardy.models.action import ChoiceOrm
 from jeopardy.models.action import ResponseOrm
 from jeopardy.models.game import GameOrm
+from jeopardy.models.game import GameStatus
 from jeopardy.models.game import RoundClass
 from jeopardy.models.game import RoundOrm
 from jeopardy.models.game import TileOrm
@@ -20,7 +21,8 @@ def is_valid_game_code(game_code: str) -> bool:
 
 async def is_active_game(game: GameOrm) -> bool:
     """Confirm that the game is active."""
-    return game.is_started and not game.is_finished
+    active_statuses = {GameStatus.JOINABLE, GameStatus.STARTED}
+    return game.status in active_statuses
 
 
 async def is_player(game: GameOrm, user: UserOrm) -> bool:

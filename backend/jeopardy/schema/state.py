@@ -6,6 +6,7 @@ from pydantic import Field
 from pydantic import constr
 from pydantic import validator
 
+from jeopardy.models.game import GameStatus
 from jeopardy.models.game import RoundClass
 
 
@@ -104,7 +105,7 @@ class Game(BaseModel):
     round_: Optional[Round] = Field(alias="next_round")
     team_that_chooses: Optional[str] = Field(alias="next_chooser")
     teams: List[Team] = []
-    status: str = "joinable"
+    status: GameStatus
 
     class Config:
         orm_mode = True
